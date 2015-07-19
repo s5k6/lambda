@@ -1,0 +1,11 @@
+Basic help
+
+This is a primitive, normal order, WHNF reducer for expressions of
+a slightly extended λ-calculus.
+
+  * Enter a λ-expression or command at the `λ>` prompt.
+    See `:h syntax` for expression syntax.
+
+  * Type `:quit` to quit, or hit `C-c C-d`.
+
+  * Or get more help, `:h list` gives a list of topics.

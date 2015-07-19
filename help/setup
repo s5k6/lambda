@@ -1,0 +1,11 @@
+Setup
+
+If there is a file `~/.haskeline`, then some settings for the Haskell
+Readline implementation may be set, spanning all programs that use
+Haskeline.  See [1] for more information.
+
+If there is a directory `~/.lambda`, then a history of recent entries
+will be stored there, as controled by the Haskeline library.
+
+____________________
+[1] http://trac.haskell.org/haskeline/wiki/UserPrefs
