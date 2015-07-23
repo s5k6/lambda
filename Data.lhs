@@ -131,23 +131,32 @@ How to display λ-Expressions
 
 
 
-      
+> class Show a => PrettyTex a where
+>     prettyTex :: Int -> a -> ShowS
+>     prettyTex _ e = shows e
 
-> prettyTex :: Int -> Expr -> ShowS
-> prettyTex _ (Var v) = showString v
-> prettyTex _ (Str s) = showString "\\textrm{" . shows s . showString "}"
-> prettyTex _ (Int i) = shows i
-> prettyTex _ (Sym s) = showString "\\textbf{" . showString s . showString "}"
-> -- prettyTex _ (Strict e n) = showChar '«' . shows e . showChar '»'
-> prettyTex p (App e1 e2)
+      
+> instance PrettyTex Expr where
+>   prettyTex _ (Var v) = showString v
+>   prettyTex _ (Str s) = showString "\\textrm{" . shows s . showString "}"
+>   prettyTex _ (Int i) = shows i
+>   prettyTex _ (Sym s) = showString "\\textbf{" . showString s . showString "}"
+>   prettyTex p (App e1 e2)
 >     = showParen (p > 2) $ prettyTex 2 e1 . showString "~" . prettyTex 3 e2
-> prettyTex p (Lam s v e)
+>   prettyTex p (Lam s v e)
 >     = showParen (p > 1) $ showString "\\lambda " . var s v . body e
 >     where
->     var s v = (if s then showChar '!' else id) . showString v
->     body (Lam s v e) = showString "~" . var s v . body e
->     body e = showString ".~" . prettyTex 1 e
-> prettyTex _ _ = error "LaTeX output is not implemented yet"
+>       var s v = (if s then showChar '!' else id) . showString v
+>       body (Lam s v e) = showString "~" . var s v . body e
+>       body e = showString ".~" . prettyTex 1 e
+>   prettyTex p (Prim o as _)
+>     = showParen (p > 3)
+>       $
+>       showString "\\texttt{" . showString o . showString "}"
+>       .
+>       (compose . map (\x-> showChar '~' . prettyUtf8 4 x) $ reverse as)
+>   prettyTex _ e
+>     = error $ "LaTeX output is not implemented yet:" ++ show e
 
  > prettyTex p (Let e ds)
  >     | M.null ds = showParen (p > 0) $ prettyTex 0 e
