@@ -16,7 +16,7 @@ Provide the entire file contents as one big string.
 
 
 
-Export date ofcompilation
+Export information about the compilation process
 
 > compDate :: Q Exp
 > compDate
@@ -26,16 +26,17 @@ Export date ofcompilation
 
 
 
-OMFG: Try to snatch SVN revision with svn tools.  If not possile,
-resort to REVISION file.  Fallback to UNKNOWN.
+OMFG: Try to snatch a revision number.  Try git first.  If that fails,
+resort to the REVISION file.  Then fall back to UNKNOWN.  Subversion
+is not expected to see this code ever again...
 
-> svnRevision :: Q Exp
-> svnRevision
+> getRevision :: Q Exp
+> getRevision
 >   = stringE =<< runIO f
 >   where
->   f = (fromREVISION `catchIOError` (const fromSvnInfo))
->       `catchIOError` (const $ return "UNKNOWN")
->   fromSvnInfo = init <$> readProcess "svnversion" [] ""
+>   f = fromGitDescribe `catchIOError` (const $ fromREVISION `catchIOError` (const $ return "UNKNOWN"))
+>   fromGitDescribe = init <$> readProcess "git" ["describe"] ""
+>   -- fromSvnInfo = init <$> readProcess "svnversion" [] ""
 >   fromREVISION = init <$> readFile "REVISION"
 
 

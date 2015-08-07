@@ -63,7 +63,7 @@ refactored.
 >               in Just . Lam s x' $ try go b'
 >         | otherwise = Lam s x <$> go b
 >     go _ = Nothing
-        
+
 
 > data Reason
 >     = Beta
@@ -84,29 +84,29 @@ refactored.
 >     | Finished
 >     | Failed String
 
-> type Stack = [(Expr,[Expr])]        
-              
+> type Stack = [(Expr,[Expr])]
+
 > whnf :: M.Map String Expr -> Expr -> Steps
 > whnf st = \e-> go e [] []
 >     where
 >
 >     go :: Expr -> [Expr] -> Stack -> Steps
->           
+>
 >     go (App e1 e2) es = go e1 (e2:es)
 >
 >     go l@(Lam s v b) (e:es)
 >       = if s
 >         then go e [] . ((l, es):)
 >         else step Beta (subst e v b) es
->              
+>
 >     go (Var v) es
 >       = case M.lookup v st of
 >           Nothing -> const (Failed $ "Variable `"++v++"` unknown.")
 >           Just e' -> step Lookup e' es
-> 
+>
 >     go (Prim q as 0) es = delta q (reverse as) es
 >     go p@(Prim _ _ n) (e:es) | n <= 1+length es = go e [] . ((p,es) :)
->           
+>
 >     go e es = back e es -- so here `e:es` is in whnf
 
 >     step :: Reason -> Expr -> [Expr] -> Stack -> Steps
@@ -159,8 +159,7 @@ WAIT — all code below this line is a stinking pile of crap!
 >              }
 
 > main :: IO ()
-> main = do putStr $ "Primitive λ-evaluator.  Rev " ++ $(P.svnRevision) ++ ".  Compiled " ++ $(P.compDate) ++ ".\nType `:h` for help.  "
->           putStrLn $ colored "1;31" (showString "☠ experimental ☣") ""
+> main = do putStrLn $ colored "1;30" (showString "Primitive λ-evaluator") . showString " — Type `:h` for help.  " . colored "1;31" (showString "☠ experimental ☣") $ ""
 >           as <- E.getArgs
 >           hist <- (++) <$> E.getEnv "HOME" <*> pure "/.lambda/history"
 >           st <- if null as then return st else cmdLoad as st
@@ -195,7 +194,7 @@ One may feed `repl` with an initial input, and a cursor position.
 >             (\(str,n) -> H.getInputLineWithInitial p $ splitAt n str)
 >             retry
 >        case l of
->         Nothing -> outputStrLn "\nbye" 
+>         Nothing -> outputStrLn "\nbye"
 >         Just [] -> repl Nothing st
 >         Just text
 >           -> case parse command "your input" text of
@@ -206,7 +205,7 @@ One may feed `repl` with an initial input, and a cursor position.
 >               Right cmd
 >                 -> case cmd of
 >                     Quit
->                       -> outputStrLn "\nbye" 
+>                       -> outputStrLn "\nbye"
 >                     Eval expr
 >                       -> do g <- lift
 >                                  .
@@ -248,7 +247,7 @@ One may feed `repl` with an initial input, and a cursor position.
 > printer Internal = shows
 > printer Unicode = prettyUtf8 0
 > printer Latex = prettyTex 0
- 
+
 
 
 > data Stats = Stats { stTotal :: !Int
@@ -256,7 +255,7 @@ One may feed `repl` with an initial input, and a cursor position.
 >                    , stDelta :: !Int
 >                    , stLookup :: !Int
 >                    }
-> 
+>
 > instance Show Stats where
 >     showsPrec _ (Stats t b d l)
 >         = shows t . showString " steps (" . c . showChar ')'
@@ -279,7 +278,7 @@ One may feed `repl` with an initial input, and a cursor position.
 >        -> (Expr -> ShowS) -- printer
 >        -> Steps           -- from `whnf`
 >        -> IO Bool         -- success
-> report lim tr pr = go (Stats 0 0 0 0) (Stats 0 0 0 0) Nothing 
+> report lim tr pr = go (Stats 0 0 0 0) (Stats 0 0 0 0) Nothing
 >     where
 >     go stats _ _ _ | maybe False (stTotal stats >=) lim
 >       = do putStrLn $ colored "31"
@@ -327,7 +326,7 @@ One may feed `repl` with an initial input, and a cursor position.
 >             = Stats (nt-ot) (nb-ob) (nd-od) (nl-ol)
 >     mbPrintLast _ _ _ = return ()
 
-                         
+
 
 > cmdLoad :: [String] -> Status -> IO Status
 > cmdLoad [] st
@@ -364,8 +363,14 @@ One may feed `repl` with an initial input, and a cursor position.
 >     help "list"
 >       = do putStrLn "The following help topics ara available:\n"
 >            putStrLn . unlines . map ("    :h "++)
->              . S.toList . S.insert "list" . S.insert "primitives"
+>              . S.toList . S.insert "version" . S.insert "list" . S.insert "primitives"
 >              $ M.keysSet allHelp
+>     help "version"
+>       = do putStrLn
+>              $ unlines
+>              [ "Revision: " ++ $(P.getRevision)
+>              , "Compiled: " ++ $(P.compDate)
+>              ]
 >     help "primitives"
 >       = do putStrLn "Primitives with their number of arguments required \
 >                     \in WHNF:\n"
