@@ -1,0 +1,4 @@
+
+Bug: When interrupting with C-c, all settings are restored.
+
+Feature: Sanitize code generating output.  Implement LaTeX output.
