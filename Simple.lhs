@@ -3,14 +3,12 @@
 > import qualified Data.Set as S
 > import qualified Data.Map as M
 > import qualified System.Environment as E
-> import System.Console.Haskeline as H
-> import Control.Monad.Trans ( lift )
-> import Control.Monad
+> import System.Console.Haskeline
+> import Control.Monad.State.Strict
 > import Parser
 > import Data
 > import Helper
 > import qualified CompileTime as C
-
 
 
 If the fallible function `f` finds a new value, then `try f` returns
@@ -148,8 +146,7 @@ WAIT — all code below this line is a stinking pile of crap!
 > type Bindings = M.Map String Expr
 
 > data Status
->     = Status { good :: Bool
->              , env :: M.Map String Expr
+>     = Status { env :: M.Map String Expr
 >              , limit :: Maybe Int
 >              , trace :: Bool
 >              , lastLoad :: [String]
@@ -157,23 +154,22 @@ WAIT — all code below this line is a stinking pile of crap!
 >              }
 
 > main :: IO ()
-> main = do putStrLn $ colored "1;30" (showString "Primitive λ-evaluator") . showString " — Type `:h` for help.  " . colored "1;31" (showString "☠ experimental ☣") $ ""
+> main = do putStrLn $ colored "1;30" (showString "Primitive λ-evaluator") . showString " — Type `:h` for help.\n" . colored "1;31" (showString "☠ experimental ☣") $ ""
 >           as <- E.getArgs
 >           hist <- (++) <$> E.getEnv "HOME" <*> pure "/.lambda/history"
 >           st <- if null as then return st else cmdLoad as st
->           let unescapable = catchCtrlC unescapable $ repl Nothing st
->           H.runInputT H.defaultSettings{ historyFile = Just hist }
->             (withInterrupt unescapable)
+>           let unescapable = catchCtrlC unescapable $ repl Nothing
+>           evalStateT (runInputT defaultSettings{ historyFile = Just hist }
+>             (withInterrupt unescapable)) st
 >     where
->     st = Status { good = True
->                 , env = M.empty
+>     st = Status { env = M.empty
 >                 , limit = Just 1000
 >                 , trace = True
 >                 , lastLoad = []
 >                 , format = Unicode
 >                 }
 
-> type Repl = Status -> H.InputT IO ()
+> type Repl = InputT (StateT Status IO) ()
 
 > catchCtrlC :: MonadException m => InputT m a -> InputT m a -> InputT m a
 > catchCtrlC fallback what = handle handler what
@@ -186,26 +182,26 @@ WAIT — all code below this line is a stinking pile of crap!
 One may feed `repl` with an initial input, and a cursor position.
 
 > repl :: Maybe (String,Int) -> Repl
-> repl retry st
+> repl retry
 >   = do l <- maybe
->             (H.getInputLine p)
->             (\(str,n) -> H.getInputLineWithInitial p $ splitAt n str)
+>             (getInputLine p)
+>             (\(str,n) -> getInputLineWithInitial p $ splitAt n str)
 >             retry
 >        case l of
 >         Nothing -> outputStrLn "\nbye"
->         Just [] -> repl Nothing st
+>         Just [] -> repl Nothing
 >         Just text
 >           -> case parse command "your input" text of
 >               Left msg
 >                 -> do outputStrLn $ show msg
 >                       repl (Just (text, pred . sourceColumn . errorPos $ msg))
->                            st{ good = False }
 >               Right cmd
 >                 -> case cmd of
 >                     Quit
 >                       -> outputStrLn "\nbye"
 >                     Eval expr
->                       -> do g <- lift
+>                       -> do st <- lift get
+>                             g <- lift . lift
 >                                  .
 >                                  report (limit st) (trace st)
 >                                  (printer $ format st)
@@ -213,36 +209,51 @@ One may feed `repl` with an initial input, and a cursor position.
 >                                  Step (Other "") expr
 >                                  $
 >                                  whnf (env st) expr
->                             repl Nothing st{ good = g }
+>                             repl $ g ? Nothing $ Just ("",0)
 >                     Def v (Just e)
->                       -> repl Nothing st{ env = M.insert v e $ env st, good = True }
+>                       -> do lift $ modify (\st -> st{ env = M.insert v e $ env st })
+>                             repl Nothing
 >                     Def v Nothing
->                       -> repl Nothing st{ env = M.delete v $ env st, good = True }
+>                       -> do lift $ modify (\st -> st{ env = M.delete v $ env st })
+>                             repl Nothing
 >                     Clear
->                       -> repl Nothing st{ env = M.empty, good = True }
+>                       -> do lift . modify $ \st -> st{ env = M.empty }
+>                             repl Nothing
 >                     Load []
->                       -> lift (cmdLoad (lastLoad st) st) >>= repl Nothing
+>                       -> do st <- lift get
+>                             st <- lift (lift $ cmdLoad (lastLoad st) st)
+>                             lift $ put st
+>                             repl Nothing
 >                     Load xs
->                       -> lift (cmdLoad xs st) >>= repl Nothing
+>                       -> do st <- lift get
+>                             st <- lift (lift $ cmdLoad xs st)
+>                             lift $ put st
+>                             repl Nothing
 >                     List
->                       -> lift (cmdList st) >>= repl Nothing
+>                       -> do st <- lift get
+>                             lift . lift $ cmdList st
+>                             repl Nothing
 >                     Help ts
->                       -> lift (cmdHelp ts) >> repl Nothing st{ good = True }
+>                       -> lift (lift $ cmdHelp ts) >> repl Nothing
 >                     ShowSettings
->                       -> do outputStr $ unlines
+>                       -> do st <- lift get
+>                             outputStr $ unlines
 >                               [ "limit " ++ maybe "none" show (limit st)
 >                               , "trace " ++ (trace st ? "all" $ "none")
 >                               , "format " ++ show (format st)
 >                               ]
->                             repl Nothing st{ good = True }
+>                             repl Nothing
 >                     Limit l
->                       -> repl Nothing st{ limit = l, good = True }
+>                       -> do lift . modify $ \st -> st{ limit = l }
+>                             repl Nothing
 >                     Trace t
->                       -> repl Nothing st{ trace = t, good = True }
+>                       -> do lift . modify $ \st -> st{ trace = t }
+>                             repl Nothing
 >                     Format f
->                       -> repl Nothing st{ format = f, good = True }
+>                       -> do lift . modify $ \st -> st{ format = f }
+>                             repl Nothing
 >   where
->   p = colored (good st ? "1;32" $ "1;31") (showString "λ> ") ""
+>   p = colored (maybe "1;32" (const "1;31") retry) (showString "λ> ") ""
 
 
 > printer :: Format -> Expr -> ShowS
@@ -330,14 +341,14 @@ One may feed `repl` with an initial input, and a cursor position.
 
 
 
-> cmdList :: Status -> IO Status
+> cmdList :: Status -> IO ()
 > cmdList st
 >     = do mapM_ (\(v,e) -> putStrLn . showString v
 >                           . showString " = " . (printer $ format st) e $ ";")
 >            . M.toList $ env st
 >          putStrLn $ "Total of " ++ show (M.size $ env st)
 >            ++ " definitions."
->          return st{good = True}
+>          return ()
 
 > cmdLoad :: [String] -> Status -> IO Status
 > cmdLoad fs st
@@ -351,7 +362,7 @@ One may feed `repl` with an initial input, and a cursor position.
 >            case ds of
 >             Left msg
 >               -> do putStrLn (show msg)
->                     return st{ good = False }
+>                     return st --FIXME { good = False }
 >             Right ds
 >               -> do putStrLn $ "Loaded " ++ show (M.size ds)
 >                       ++ " definitions from `" ++ fp ++ "`."
