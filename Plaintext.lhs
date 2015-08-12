@@ -6,6 +6,7 @@
 > import System.Process
 > import System.Directory
 > import System.IO.Error
+> import Helper
 
 
 
@@ -32,13 +33,18 @@ is not expected to see this code ever again...
 
 > getRevision :: Q Exp
 > getRevision
->   = stringE =<< runIO f
+>   = stringE =<< runIO getInfo
 >   where
->   f = fromGitDescribe `catchIOError` (const $ fromREVISION `catchIOError` (const $ return "UNKNOWN"))
->   fromGitDescribe = init <$> readProcess "git" ["describe"] ""
->   -- fromSvnInfo = init <$> readProcess "svnversion" [] ""
->   fromREVISION = init <$> readFile "REVISION"
-
+>   first es d = foldr (\e e' -> e `catchIOError` const e') d es
+>   getInfo
+>     = do r <- first [ trim <$> readProcess "git" ["describe"] ""
+>                       -- , rmTrailingNl <$> readProcess "svnversion" [] ""
+>                     , trim <$> readFile "REVISION"
+>                     ] $ error "Unknown revision: Not a git repo, and no \
+>                               \`REVISION` file found."
+>          p <- first [ trim <$> readProcess "git" ["diff", "--shortstat", "HEAD"] ""
+>                     ] $ return ""
+>          return $ length p == 0 ? r $ r++" ("++p++")"
 
 
 This generates a list of all help topics, one for each file in the

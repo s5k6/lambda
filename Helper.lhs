@@ -1,6 +1,7 @@
 > module Helper ( module Helper, module Data.List ) where
 
 > import Data.List ( intersperse, sort )
+> import Data.Char ( isSpace )
 
 
 
@@ -22,7 +23,7 @@
 
 
 
-> infixl 8 ?
+> infixl 1 ?
 > (?) :: Bool -> t -> t -> t
 > (?) c t e = if c then t else e
 
@@ -31,3 +32,6 @@
 
 > unliness :: [ShowS] -> ShowS
 > unliness = compose . intersperse (showChar '\n')        
+
+> trim :: String -> String
+> trim = reverse . dropWhile isSpace . reverse . dropWhile isSpace
