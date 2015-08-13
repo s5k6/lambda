@@ -1,0 +1,46 @@
+
+Basic functions
+
+  :h <topic>*
+    Get help about the specified topics, or list all topics.
+
+  :quit
+    Terminate.
+
+  :l <file>*
+    Load the specified files.  Without arguments, reload all files.
+
+
+Defining on the fly
+
+  :d <var> <var>* = <expression>
+    Define a variable or function (one may specify arguments to the
+    left of the `=`).  The following are equivalent:
+
+        :d const x y = x
+        :d const x = \y. x
+        :d const = \x y. x
+
+  :d <var> =
+    Remove definition of the given variable.
+    
+  :d * =
+    Remove definition of all variables: Clear the environment.
+
+
+Customizing
+
+  :set
+    Show all current settings
+
+  :set limit (none | <int>)
+    Set maximum number of steps to take before the calculation is
+    interrupted
+
+  :set trace (all | none)
+    Set tacing output to all or none.  Future versions shall alloe to
+    filter certain kinds of steps, like “only δ-reductions”.
+
+  :set format (internal | unicode | latex)
+    Set format to render intermediate steps and result.  Currently, only
+    `unicode` is fully implemented`.

@@ -215,17 +215,17 @@ One may feed `repl` with an initial input, and a cursor position.
 >                                  whnf (env st) expr
 >                             repl Nothing st{ good = g }
 >                     Def v (Just e)
->                       -> repl Nothing st{ env = M.insert v e $ env st }
+>                       -> repl Nothing st{ env = M.insert v e $ env st, good = True }
 >                     Def v Nothing
->                       -> repl Nothing st{ env = M.delete v $ env st }
+>                       -> repl Nothing st{ env = M.delete v $ env st, good = True }
+>                     Clear
+>                       -> repl Nothing st{ env = M.empty, good = True }
 >                     Load []
 >                       -> lift (cmdLoad (lastLoad st) st) >>= repl Nothing
 >                     Load xs
 >                       -> lift (cmdLoad xs st) >>= repl Nothing
 >                     List
 >                       -> lift (cmdList st) >>= repl Nothing
->                     Clear
->                       -> repl Nothing st{ env = M.empty }
 >                     Help ts
 >                       -> lift (cmdHelp ts) >> repl Nothing st{ good = True }
 >                     ShowSettings

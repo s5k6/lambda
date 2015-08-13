@@ -245,9 +245,10 @@ Parser für Eingaben am interaktiven Prompt
 >       , key "l" >> Load <$> many word
 >       , key "r" >> fail "Command `:r` is deprecated, use `:l` with no arg\
 >                         \uments instead."
->       , key "c" >> return Clear
+>       , key "c" >> fail "Command `:c` is deprecated, use `:d *=` instead."
 >       , key "d" >> choice [ try $ (\(s,e) -> Def s $ Just e) <$> definition
->                           , Def <$> varname <*> pure Nothing <* char '='
+>                           , Def <$> varname <*> pure Nothing <* key "="
+>                           , key "*" >> key "=" >> return Clear
 >                           , return List
 >                           ]
 >       , key "set" >> option ShowSettings setting
