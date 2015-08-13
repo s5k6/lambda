@@ -10,10 +10,10 @@
 >     (newline, space, many, optional, (<|>))
 > import Data
 > import qualified Data.Map as M
-              
-              
+ 
+ 
 --------------------------------------------------------------------------------
-Combinators                  
+Combinators
 
 
 > skipManyTill :: Parser b -> Parser a -> Parser ()
@@ -40,14 +40,14 @@ Spaces and comments
 >                   || '>' < c && c <= '~'
 >               )
 
-> comment :: Parser ()           
+> comment :: Parser ()
 > comment
 >     = char '#' >> (cutk =<< try (manyTill commentKeyChar $ char '>')) <|> ceol
 >     where
 >     ceol = skipTill (newline <|> eof)
 >     cutk k = skipTill . string $ '<':k++"#"
 
-> whitespace :: Parser ()              
+> whitespace :: Parser ()
 > whitespace
 >     = skipMany (space <|> comment <?> "whitespace")
 
@@ -95,7 +95,7 @@ Der top-level Parser kümmert sich um Leerzeichen am Anfang des Input und um EOF
          |  <con>           eine Variable, eine Konstante, eine Abstraktion,
          |  <abst>          oder ein Klammerausdruck, evtl mit lokalen
          |  <paren>         Definitionen.
-         
+ 
 > lexpr :: Parser Expr
 > lexpr = abst <|> varOrPrim <|> con <|> paren
 
@@ -141,7 +141,7 @@ Der top-level Parser kümmert sich um Leerzeichen am Anfang des Input und um EOF
 >              , Bln <$> blnLiteral
 >              , Sym <$> symLiteral
 >              ]
-                       
+ 
 > intLiteral :: Parser Integer
 > intLiteral
 >     = lexeme $ f . map (toInteger . subtract o . fromEnum) <$> many1 digit
@@ -182,7 +182,7 @@ Der top-level Parser kümmert sich um Leerzeichen am Anfang des Input und um EOF
 > symLiteral :: Parser String
 > symLiteral
 >     = lexeme $ (:) <$> upper <*> many (alphaNum <|> oneOf "_'")
-            
+ 
 
 <abst> ::= `\` (`!`? <var>)+ `.` <expression>
 
@@ -243,9 +243,13 @@ Parser für Eingaben am interaktiven Prompt
 >       [ key "h" >> Help <$> many word
 >       , key "quit" >> return Quit
 >       , key "l" >> Load <$> many word
->       , key "r" >> return Reload
+>       , key "r" >> fail "Command `:r` is deprecated, use `:l` with no arg\
+>                         \uments instead."
 >       , key "c" >> return Clear
->       , key "d" >> uncurry Def <$> definition
+>       , key "d" >> choice [ try $ (\(s,e) -> Def s $ Just e) <$> definition
+>                           , Def <$> varname <*> pure Nothing <* char '='
+>                           , return List
+>                           ]
 >       , key "set" >> option ShowSettings setting
 >       ]
 >     )

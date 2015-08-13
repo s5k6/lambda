@@ -30,9 +30,9 @@
 >   | Quit
 >   | Help [String]
 >   | Load [FilePath]
->   | Reload
 >   | Clear
->   | Def String Expr
+>   | List
+>   | Def String (Maybe Expr)
 >   | ShowSettings
 >   | Limit (Maybe Int)
 >   | Trace Bool
@@ -40,7 +40,7 @@
 >   deriving (Eq, Show)
 
 > data Format = Internal | Unicode | Latex deriving Eq
-> 
+>
 > instance Show Format where
 >   show Internal = "internal"
 >   show Unicode = "unicode"
@@ -97,8 +97,8 @@ How to display λ-Expressions
 > instance PrettyUtf8 Expr where
 >     prettyUtf8 _ (Var v) = showString v
 >     prettyUtf8 _ (Str s) = colored colString $ shows s
->     prettyUtf8 _ (Int i) = colored colInt $ shows i     
->     prettyUtf8 _ (Bln b) = colored colBln $ shows b     
+>     prettyUtf8 _ (Int i) = colored colInt $ shows i
+>     prettyUtf8 _ (Bln b) = colored colBln $ shows b
 >     prettyUtf8 _ (Sym s) = colored colSym $ showString s
 >     prettyUtf8 p (App e1 e2)
 >         = showParen (p > 2) $ prettyUtf8 2 e1 . showString " " . prettyUtf8 3 e2
@@ -108,7 +108,7 @@ How to display λ-Expressions
 >                    (showChar '(') . ss . colored colStrict (showChar ')')
 >           else showParen (p > 1) ss
 >         where
->         ss = showString "λ" . var s v . body e  
+>         ss = showString "λ" . var s v . body e
 >         var s v = (if s then showChar '!' else id) . showString v
 >         body (Lam s v e) = showString " " . var s v . body e
 >         body e = showString ". " . prettyUtf8 1 e
@@ -135,7 +135,7 @@ How to display λ-Expressions
 >     prettyTex :: Int -> a -> ShowS
 >     prettyTex _ e = shows e
 
-      
+ 
 > instance PrettyTex Expr where
 >   prettyTex _ (Var v) = showString v
 >   prettyTex _ (Str s) = showString "\\textrm{" . shows s . showString "}"
@@ -171,6 +171,6 @@ How to display λ-Expressions
  > prettyTex p (Strict n es)
  >     = showChar '«' . shows (foldr1 (flip App) es) . showString " ?" . shows n . showChar '»'
 
-      
+ 
 
 ================================================================================

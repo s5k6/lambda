@@ -214,12 +214,16 @@ One may feed `repl` with an initial input, and a cursor position.
 >                                  $
 >                                  whnf (env st) expr
 >                             repl Nothing st{ good = g }
->                     Def v e
+>                     Def v (Just e)
 >                       -> repl Nothing st{ env = M.insert v e $ env st }
+>                     Def v Nothing
+>                       -> repl Nothing st{ env = M.delete v $ env st }
+>                     Load []
+>                       -> lift (cmdLoad (lastLoad st) st) >>= repl Nothing
 >                     Load xs
 >                       -> lift (cmdLoad xs st) >>= repl Nothing
->                     Reload
->                       -> lift (cmdLoad (lastLoad st) st) >>= repl Nothing
+>                     List
+>                       -> lift (cmdList st) >>= repl Nothing
 >                     Clear
 >                       -> repl Nothing st{ env = M.empty }
 >                     Help ts
@@ -326,14 +330,16 @@ One may feed `repl` with an initial input, and a cursor position.
 
 
 
-> cmdLoad :: [String] -> Status -> IO Status
-> cmdLoad [] st
+> cmdList :: Status -> IO Status
+> cmdList st
 >     = do mapM_ (\(v,e) -> putStrLn . showString v
 >                           . showString " = " . (printer $ format st) e $ ";")
 >            . M.toList $ env st
 >          putStrLn $ "Total of " ++ show (M.size $ env st)
 >            ++ " definitions."
 >          return st{good = True}
+
+> cmdLoad :: [String] -> Status -> IO Status
 > cmdLoad fs st
 >     = do st <- foldM load st{ env = M.empty, lastLoad = fs } fs
 >          putStrLn $ "Total of " ++ show (M.size $ env st)
