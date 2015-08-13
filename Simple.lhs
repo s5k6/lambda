@@ -1,5 +1,3 @@
-> {-# LANGUAGE TemplateHaskell #-}
-
 > module Simple where
 
 > import qualified Data.Set as S
@@ -11,7 +9,7 @@
 > import Parser
 > import Data
 > import Helper
-> import qualified Plaintext as P
+> import qualified CompileTime as C
 
 
 
@@ -364,12 +362,12 @@ One may feed `repl` with an initial input, and a cursor position.
 >       = do putStrLn "The following help topics ara available:\n"
 >            putStrLn . unlines . map ("    :h "++)
 >              . S.toList . S.insert "version" . S.insert "list" . S.insert "primitives"
->              $ M.keysSet allHelp
+>              $ M.keysSet C.help
 >     help "version"
 >       = do putStrLn
 >              $ unlines
->              [ "Revision: " ++ $(P.getRevision)
->              , "Compiled: " ++ $(P.compDate)
+>              [ "Revision: " ++ C.revision
+>              , "Compiled: " ++ C.date
 >              ]
 >     help "primitives"
 >       = do putStrLn "Primitives with their number of arguments required \
@@ -381,9 +379,6 @@ One may feed `repl` with an initial input, and a cursor position.
 >          = putStrLn $ "    " ++ n ++ " — " ++ show s ++ ", " ++ h
 >         f _ = error "There should be only primitives!"
 >     help t
->       = case M.lookup t allHelp of
+>       = case M.lookup t C.help of
 >           Just h -> putStrLn h
 >           Nothing -> putStrLn $ "There is no help topic `"++t++"`."
-
-> allHelp :: M.Map String String
-> allHelp = $(P.allHelp)

@@ -1,6 +1,6 @@
 > {-# LANGUAGE TemplateHaskell #-}
 
-> module Plaintext where
+> module Templates where
 >
 > import Language.Haskell.TH
 > import System.Process

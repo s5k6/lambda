@@ -5,7 +5,7 @@ targets = lambda
 all : $(targets)
 
 lambda :
-	touch Plaintext.lhs
+	touch CompileTime.lhs
 	ghc --make -j$(shell nproc) -Wall -fno-warn-name-shadowing -outputdir tmp -o lambda -main-is Simple.main Simple.lhs
 
 clean :
