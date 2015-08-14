@@ -4,9 +4,10 @@
 > import qualified Data.Map as M
 > import qualified System.Environment as E
 > import System.Console.Haskeline
-> import Control.Monad.State.Strict
+> import Control.Monad.Reader
 > import Parser
 > import Data
+> import Data.IORef
 > import Helper
 > import qualified CompileTime as C
 
@@ -158,9 +159,10 @@ WAIT — all code below this line is a stinking pile of crap!
 >           as <- E.getArgs
 >           hist <- (++) <$> E.getEnv "HOME" <*> pure "/.lambda/history"
 >           st <- if null as then return st else cmdLoad as st
+>           status <- newIORef st
 >           let unescapable = catchCtrlC unescapable $ repl Nothing
->           evalStateT (runInputT defaultSettings{ historyFile = Just hist }
->             (withInterrupt unescapable)) st
+>           runReaderT (runInputT defaultSettings{ historyFile = Just hist }
+>             (withInterrupt unescapable)) status
 >     where
 >     st = Status { env = M.empty
 >                 , limit = Just 1000
@@ -169,21 +171,36 @@ WAIT — all code below this line is a stinking pile of crap!
 >                 , format = Unicode
 >                 }
 
-> type Repl = InputT (StateT Status IO) ()
+> type Repl a = InputT (ReaderT (IORef Status) IO) a
 
 > catchCtrlC :: MonadException m => InputT m a -> InputT m a -> InputT m a
 > catchCtrlC fallback what = handle handler what
 >     where
 >     handler Interrupt
->       = do outputStrLn $ colored "31" (showString "[Ctrl-C]") ""
+>       = do outputStrLn $ colored "31" (showString "[Interrupted]") ""
 >            fallback
 
 
+> getStatus :: Repl Status
+> getStatus = lift $ ask >>= lift . readIORef
+
+> setStatus :: Status -> Repl ()
+> setStatus st
+>   = lift $ do r <- ask
+>               lift $ writeIORef r st
+
+> modStatus :: (Status -> Status) -> Repl ()
+> modStatus f
+>   = lift $ do r <- ask
+>               lift $ modifyIORef' r f
+
 One may feed `repl` with an initial input, and a cursor position.
 
-> repl :: Maybe (String,Int) -> Repl
+> repl :: Maybe (String,Int) -> Repl ()
 > repl retry
->   = do l <- maybe
+>   = do let p = colored (maybe "1;32" (const "1;31") retry)
+>                        (showString "λ> ") ""
+>        l <- maybe
 >             (getInputLine p)
 >             (\(str,n) -> getInputLineWithInitial p $ splitAt n str)
 >             retry
@@ -200,7 +217,7 @@ One may feed `repl` with an initial input, and a cursor position.
 >                     Quit
 >                       -> outputStrLn "\nbye"
 >                     Eval expr
->                       -> do st <- lift get
+>                       -> do st <- getStatus
 >                             g <- lift . lift
 >                                  .
 >                                  report (limit st) (trace st)
@@ -211,49 +228,47 @@ One may feed `repl` with an initial input, and a cursor position.
 >                                  whnf (env st) expr
 >                             repl $ g ? Nothing $ Just ("",0)
 >                     Def v (Just e)
->                       -> do lift $ modify (\st -> st{ env = M.insert v e $ env st })
+>                       -> do modStatus $ \s -> s{ env = M.insert v e $ env s }
 >                             repl Nothing
 >                     Def v Nothing
->                       -> do lift $ modify (\st -> st{ env = M.delete v $ env st })
+>                       -> do modStatus $ \s -> s{ env = M.delete v $ env s }
 >                             repl Nothing
 >                     Clear
->                       -> do lift . modify $ \st -> st{ env = M.empty }
+>                       -> do modStatus $ \s -> s{ env = M.empty }
 >                             repl Nothing
 >                     Load []
->                       -> do st <- lift get
->                             st <- lift (lift $ cmdLoad (lastLoad st) st)
->                             lift $ put st
+>                       -> do s <- getStatus
+>                             s <- lift (lift $ cmdLoad (lastLoad s) s)
+>                             setStatus s
 >                             repl Nothing
 >                     Load xs
->                       -> do st <- lift get
->                             st <- lift (lift $ cmdLoad xs st)
->                             lift $ put st
+>                       -> do s <- getStatus
+>                             s <- lift (lift $ cmdLoad xs s)
+>                             setStatus s
 >                             repl Nothing
 >                     List
->                       -> do st <- lift get
->                             lift . lift $ cmdList st
+>                       -> do s <- getStatus
+>                             lift . lift $ cmdList s
 >                             repl Nothing
 >                     Help ts
 >                       -> lift (lift $ cmdHelp ts) >> repl Nothing
 >                     ShowSettings
->                       -> do st <- lift get
+>                       -> do s <- getStatus
 >                             outputStr $ unlines
->                               [ "limit " ++ maybe "none" show (limit st)
->                               , "trace " ++ (trace st ? "all" $ "none")
->                               , "format " ++ show (format st)
+>                               [ "limit " ++ maybe "none" show (limit s)
+>                               , "trace " ++ (trace s ? "all" $ "none")
+>                               , "format " ++ show (format s)
 >                               ]
 >                             repl Nothing
 >                     Limit l
->                       -> do lift . modify $ \st -> st{ limit = l }
+>                       -> do modStatus $ \s -> s{ limit = l }
 >                             repl Nothing
 >                     Trace t
->                       -> do lift . modify $ \st -> st{ trace = t }
+>                       -> do modStatus $ \s -> s{ trace = t }
 >                             repl Nothing
 >                     Format f
->                       -> do lift . modify $ \st -> st{ format = f }
+>                       -> do modStatus $ \s -> s{ format = f }
 >                             repl Nothing
->   where
->   p = colored (maybe "1;32" (const "1;31") retry) (showString "λ> ") ""
 
 
 > printer :: Format -> Expr -> ShowS

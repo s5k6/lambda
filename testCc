@@ -1,0 +1,28 @@
+#!/bin/bash
+set -u -e -C;
+shopt -s nullglob;
+
+function err { echo "$@" >&2; exit 1; }
+function warn { echo "$@" >&2; }
+
+function ask_yN {
+    local answer='';
+    read -n 1 -s -p "$* [yN]" answer;
+    if test "${answer}" = y; then
+        echo yes;
+        return 0;
+    fi;
+    echo no;
+    return 1;
+}
+
+{ coproc ./lambda >&3; } 3>&1
+echo ':h version
+:d x=4
+:d' >&${COPROC[1]}
+sleep 0.1
+kill -s SIGINT $COPROC_PID
+sleep 0.1
+echo ':d
+:quit' >&${COPROC[1]}; echo
+wait $COPROC_PID
