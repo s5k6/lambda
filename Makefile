@@ -10,5 +10,4 @@ lambda :
 	strip lambda
 
 clean :
-	which git >/dev/null && git clean -Xd -f
-	rm -rf tmp $(targets)
+	which git >/dev/null && git clean -Xd -f || rm -rf tmp $(targets)
