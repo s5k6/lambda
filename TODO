@@ -1,11 +1,8 @@
 
-Bugs:
+Flags: ✓ done, ☠ bug, ☣ missing, * improvement
 
-  * Bug: When interrupting with C-c, all settings are restored.
 
-Todos:
-
-  * Sanitize code generating output.  Implement LaTeX output.
+  ☣ Sanitize code generating output.  Implement LaTeX output.
 
   * Sharing wäre echt nett
 
@@ -17,9 +14,11 @@ Todos:
   * α-Konversion als Schritt anzeigen.  Wie genau?  Wenn konvertiert
     wird dann einen Schritt mit allen Konversionen?
 
-  * Fehlermeldung bei Namenskollision beim Laden.  
+  ☣ Fehlermeldung bei Namenskollision beim Laden.  
 
-  * Bei α-konversion bessere Variablennamen erzeugen.  Nicht gut:
+  ☣ Prompt changes when loading fails.  
+
+  * Bei α-Konversion bessere Variablennamen erzeugen.  Nicht gut:
   
            (λz x. (λx. x) z) x
         β→
@@ -28,3 +27,10 @@ Todos:
   * Allow spec of colors
 
   * Trace in Datei, festlegen was genau getraced werden soll
+
+
+
+  ✓ Programm terminiert wenn Datei nicht gefunden.
+
+  ✓ When interrupting with C-c, all settings are restored.
+

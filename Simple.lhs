@@ -155,21 +155,26 @@ WAIT — all code below this line is a stinking pile of crap!
 >              }
 
 > main :: IO ()
-> main = do putStrLn $ colored "1;30" (showString "Primitive λ-evaluator") . showString " — Type `:h` for help.\n" . colored "1;31" (showString "☠ experimental ☣") $ ""
->           as <- E.getArgs
->           hist <- (++) <$> E.getEnv "HOME" <*> pure "/.lambda/history"
->           st <- if null as then return st else cmdLoad as st
->           status <- newIORef st
->           let unescapable = catchCtrlC unescapable $ repl Nothing
->           runReaderT (runInputT defaultSettings{ historyFile = Just hist }
->             (withInterrupt unescapable)) status
->     where
->     st = Status { env = M.empty
->                 , limit = Just 1000
->                 , trace = True
->                 , lastLoad = []
->                 , format = Unicode
->                 }
+> main
+>   = do putStrLn $ colored "1;30" (showString "Primitive λ-evaluator")
+>          . showString " — Type `:h` for help.\n"
+>          . colored "1;31" (showString "☠ experimental ☣") $ ""
+>        as <- E.getArgs
+>        hist <- (++) <$> E.getEnv "HOME" <*> pure "/.lambda/history"
+>        status <- newIORef
+>                  $
+>                  Status{ env = M.empty
+>                        , limit = Just 1000
+>                        , trace = True
+>                        , lastLoad = []
+>                        , format = Unicode
+>                        }
+>        let unescapable
+>              = catchCtrlC unescapable $ null as ? repl Nothing $ cmdLoad as
+>        runReaderT ( runInputT
+>                     defaultSettings{ historyFile = Just hist }
+>                     (withInterrupt unescapable)
+>                   ) status
 
 > type Repl a = InputT (ReaderT (IORef Status) IO) a
 
@@ -210,7 +215,7 @@ One may feed `repl` with an initial input, and a cursor position.
 >         Just text
 >           -> case parse command "your input" text of
 >               Left msg
->                 -> do outputStrLn $ show msg
+>                 -> do outputStrLn $ colored "31" (shows msg) ""
 >                       repl (Just (text, pred . sourceColumn . errorPos $ msg))
 >               Right cmd
 >                 -> case cmd of
@@ -236,16 +241,8 @@ One may feed `repl` with an initial input, and a cursor position.
 >                     Clear
 >                       -> do modStatus $ \s -> s{ env = M.empty }
 >                             repl Nothing
->                     Load []
->                       -> do s <- getStatus
->                             s <- lift (lift $ cmdLoad (lastLoad s) s)
->                             setStatus s
->                             repl Nothing
 >                     Load xs
->                       -> do s <- getStatus
->                             s <- lift (lift $ cmdLoad xs s)
->                             setStatus s
->                             repl Nothing
+>                       -> cmdLoad xs
 >                     List
 >                       -> do s <- getStatus
 >                             lift . lift $ cmdList s
@@ -365,24 +362,44 @@ One may feed `repl` with an initial input, and a cursor position.
 >            ++ " definitions."
 >          return ()
 
-> cmdLoad :: [String] -> Status -> IO Status
-> cmdLoad fs st
->     = do st <- foldM load st{ env = M.empty, lastLoad = fs } fs
->          putStrLn $ "Total of " ++ show (M.size $ env st)
->                           ++ " definitions."
->          return st
->     where
->     load st fp
->       = do ds <- parseFromFile (entirely deflist) fp
->            case ds of
->             Left msg
->               -> do putStrLn (show msg)
->                     return st --FIXME { good = False }
->             Right ds
->               -> do putStrLn $ "Loaded " ++ show (M.size ds)
->                       ++ " definitions from `" ++ fp ++ "`."
->                     return st{ env = M.union ds $ env st }
 
+Try to load all files.  If at least one of them fails, do not alter
+the environment at all.  Indicating the position of error in the
+user's input line is really ugly!
+
+> cmdLoad :: [String] -> Repl ()
+> cmdLoad fs
+>   | null fs
+>       = do fs <- lastLoad <$> getStatus
+>            go M.empty fs
+>   | otherwise
+>       = do modStatus $ \s -> s{ lastLoad = fs }
+>            go M.empty fs
+>   where
+>   go acc []
+>     = do modStatus $ \s -> s{ env = acc }
+>          outputStrLn $ "Loaded total of " ++ show (M.size acc)
+>                           ++ " definitions."
+>          repl Nothing
+>   go acc (f:fs)
+>     = do p <- lift . lift $ parseFromFile (entirely deflist) f
+>          case p of
+>             Left msg
+>               -> do outputStrLn $ colored "31" (shows msg) ""
+>                     retry
+>             Right ds
+>               -> do outputStrLn $ "Found " ++ show (M.size ds)
+>                       ++ " definitions in `" ++ f ++ "`."
+>                     go (M.union acc ds) fs
+>       `catch`
+>       \ioerr -> do outputStrLn $ colored "31" (shows (ioerr :: IOError)) ""
+>                    retry
+>     where
+>     retry = do line <- unwords . (":l":) . map show . lastLoad <$> getStatus
+>                repl $ Just ( line
+>                            , length line
+>                              - (length . unwords . map show $ f:fs)
+>                            )
 
 
 > cmdHelp :: [String] -> IO ()
