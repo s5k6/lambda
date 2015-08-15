@@ -22,17 +22,22 @@ At the interactive prompt, enter an <expression>.
 
     <bool> → `True` | `False`
 
+    <int> an integer literal.
+
     <string> a sequence of characters enclosed in `"`s.  The escape
              sequences `\\`, `\"`, `\n` and `\t` are understood.
+             You cannot do much with strings though...
     
-    <prim> see help topic on primitives: type `:h prim`.
+    <prim> see help topic on primitives: type `:h primitives`.
 
     <symbol> a lexeme matching `[A-Z][a-zA-Z0-9_]`, which is not one
              of the <bool>eans.
+             Symbol really do nothing right now. There is no pattern
+             matching.
 
 You may load predefined definitions from a file conforming
 to <deflist> with the `:l` command.
 
-    * <deflist> → ( <def> `;` )*"
+    * <deflist> → ( <def> `;` )*
 
-    <def> → <var> `=` <expression>
+    <def> → <var> <var>* `=` <expression>
