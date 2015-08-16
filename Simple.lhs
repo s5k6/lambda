@@ -157,8 +157,7 @@ WAIT — all code below this line is a stinking pile of crap!
 > main :: IO ()
 > main
 >   = do putStrLn $ colored "1;30" (showString "Primitive λ-evaluator")
->          . showString " — Type `:h` for help.\n"
->          . colored "1;31" (showString "☠ experimental ☣") $ ""
+>          . showString " — Type `:h` for help." $ ""
 >        as <- E.getArgs
 >        hist <- (++) <$> E.getEnv "HOME" <*> pure "/.lambda/history"
 >        status <- newIORef
@@ -203,7 +202,8 @@ One may feed `repl` with an initial input, and a cursor position.
 
 > repl :: Maybe (String,Int) -> Repl ()
 > repl retry
->   = do let p = colored (maybe "1;32" (const "1;31") retry)
+>   = do outputStrLn ""
+>        let p = colored (maybe "1;32" (const "1;31") retry)
 >                        (showString "λ> ") ""
 >        l <- maybe
 >             (getInputLine p)
@@ -283,16 +283,18 @@ One may feed `repl` with an initial input, and a cursor position.
 >
 > instance Show Stats where
 >     showsPrec _ (Stats t b d l)
->         = shows t . showString " steps (" . c . showChar ')'
+>         = shows t . showString " steps" . (t==0 ? id $ c)
 >         where
 >         c = compose
+>             .
+>             (showString ": ":)
 >             $
 >             intersperse
 >             (showString " + ")
 >             [ shows n . showString t
->             | (n,t) <- [ (b," β-reductions")
->                        , (d," δ-reductions")
->                        , (l," lookups")
+>             | (n,t) <- [ (b,"×β")
+>                        , (d,"×δ")
+>                        , (l,"×lookup")
 >                        ]
 >             , n > 0
 >             ]
