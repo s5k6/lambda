@@ -1,5 +1,5 @@
 
-> module Data ( Expr(..), Command(..), Format(..), free, prettyTex, prettyUtf8, primitives
+> module Data ( Expr(..), Command(..), Format(..), free, prettyTex, prettyUtf8, prettyPlain, primitives
 >             )
 >     where
 
@@ -30,6 +30,7 @@
 >   | Quit
 >   | Help [String]
 >   | Load [FilePath]
+>   | Write (Maybe FilePath)
 >   | Clear
 >   | List
 >   | Def String (Maybe Expr)
@@ -89,6 +90,44 @@ How to display λ-Expressions
 > colInt = "34"
 > colBln = "1;30"
 > colSym = "2;36"
+
+> class Show a => PrettyPlain a where
+>     prettyPlain :: Int -> a -> ShowS
+>     prettyPlain _ e = shows e
+
+> instance PrettyPlain Expr where
+>     prettyPlain _ (Var v) = showString v
+>     prettyPlain _ (Str s) = shows s
+>     prettyPlain _ (Int i) = shows i
+>     prettyPlain _ (Bln b) = shows b
+>     prettyPlain _ (Sym s) = showString s
+>     prettyPlain p (App e1 e2)
+>         = showParen (p > 2) $ prettyPlain 2 e1 . showString " " . prettyPlain 3 e2
+>     prettyPlain p (Lam s v e)
+>         = showParen (p > 1) ss
+>         where
+>         ss = showString "λ" . var s v . body e
+>         var s v = (if s then showChar '!' else id) . showString v
+>         body (Lam s v e) = showString " " . var s v . body e
+>         body e = showString ". " . prettyPlain 1 e
+>     prettyPlain p (Prim o as _)
+>         = showParen (p > 3)
+>           $
+>           showString o
+>           .
+>           (compose . map (\x-> showChar ' ' . prettyPlain 4 x) $ reverse as)
+
+ > prettyPlain p (Let e ds)
+ >     | M.null ds = showParen (p > 0) $ prettyPlain 0 e
+ >     | otherwise = showString "( "
+ >                   . prettyPlain 0 e
+ >                   . (compose . map f $ M.toList ds) . showString " )"
+ >            where
+ >            f (n, b) = showString "; " . showString n
+ >                       .
+ >                       showString " = " . prettyPlain 0 b
+
+
 
 > class Show a => PrettyUtf8 a where
 >     prettyUtf8 :: Int -> a -> ShowS

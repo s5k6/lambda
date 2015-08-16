@@ -33,5 +33,8 @@
 > unliness :: [ShowS] -> ShowS
 > unliness = compose . intersperse (showChar '\n')        
 
+> unwordss :: [ShowS] -> ShowS
+> unwordss = compose . intersperse (showChar ' ')        
+
 > trim :: String -> String
 > trim = reverse . dropWhile isSpace . reverse . dropWhile isSpace

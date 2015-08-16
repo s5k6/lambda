@@ -243,6 +243,7 @@ Parser für Eingaben am interaktiven Prompt
 >       [ key "h" >> Help <$> many word
 >       , key "quit" >> return Quit
 >       , key "l" >> Load <$> many word
+>       , key "w" >> Write <$> optional word
 >       , key "r" >> fail "Command `:r` is deprecated, use `:l` with no arg\
 >                         \uments instead."
 >       , key "c" >> fail "Command `:c` is deprecated, use `:d *=` instead."

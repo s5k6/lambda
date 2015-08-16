@@ -1,43 +1,47 @@
-Syntax overview:
+Syntax overview
+---------------
 
-At the interactive prompt, enter an <expression>.
+At the interactive prompt, enter an <exp>ression.
 
-    * <expression> → <app> ( `$` <expression> )?
+     * <exp> → <app> ( `$` <exp> )?
+ 
+               The `$` acts as right-associative low-priority
+               application.  Like parenthesis, it is part of the
+               syntax, not a builtin operator.
 
-          The `$` acts as right-associative low-priority application.
-          It is part of the syntax, not a builtin operator.
-
-    <app> → <app>? <single>
+       <app> → <app>? <single>
 
     <single> → <var>
-             | (`λ`|'\') (`!`? <var>)+ `.` <expression>
+             | (`λ`|`\`) (`!`? <var>)+ `.` <exp>
              | `(` <app> `)`
              | <int> | <bool> | <string> | <prim> | <symbol>
 
-        Prefixing an abstraction with `!` makes the function strict in
-        that argument.
+               Prefixing an abstraction with `!` makes the function
+               strict in that argument.
 
-    <var> a lexeme matching `[a-z][a-zA-Z0-9_]`, which does not
-          identify a builtin <prim>itive.
+       <var> → A lexeme matching `[a-z][a-zA-Z0-9_]`, which does not
+               identify a builtin <prim>itive.
 
-    <bool> → `True` | `False`
+      <bool> → `True` | `False`
 
-    <int> an integer literal.
+       <int> → An integer literal.
 
-    <string> a sequence of characters enclosed in `"`s.  The escape
-             sequences `\\`, `\"`, `\n` and `\t` are understood.
-             You cannot do much with strings though...
+    <string> → A sequence of characters enclosed in `"`s.  The escape
+               sequences `\\`, `\"`, `\n` and `\t` are understood.
+               You cannot do anything with strings though...
     
-    <prim> see help topic on primitives: type `:h primitives`.
+      <prim> → A primitive oprator, see the help topic on primitives for
+               more: type `:h primitives`.
 
-    <symbol> a lexeme matching `[A-Z][a-zA-Z0-9_]`, which is not one
-             of the <bool>eans.
-             Symbol really do nothing right now. There is no pattern
-             matching.
+    <symbol> → A lexeme matching `[A-Z][a-zA-Z0-9_]`, which is not one
+               of the <bool>eans.  Symbols really do nothing right
+               now.  There is no pattern matching.
 
-You may load predefined definitions from a file conforming
-to <deflist> with the `:l` command.
+
+You may load predefined definitions from a file conforming to
+<deflist> with the `:l` command.  All previously known definitions are
+lost.
 
     * <deflist> → ( <def> `;` )*
 
-    <def> → <var> <var>* `=` <expression>
+          <def> → <var> <var>* `=` <exp>

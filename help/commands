@@ -27,6 +27,10 @@ Defining on the fly
   :d * =
     Remove definition of all variables: Clear the environment.
 
+  :w <file>?
+    Write the on-the-fly definitions into <file> (or repeat last write
+    if no <file>is given).  If the file exists, append to it.  Also
+    write a comment describing the last `:l` command.
 
 Customizing
 

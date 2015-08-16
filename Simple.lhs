@@ -149,9 +149,11 @@ WAIT — all code below this line is a stinking pile of crap!
 
 > data Status
 >     = Status { env :: M.Map String Expr
+>              , idef :: S.Set String -- mark interactively defined
 >              , limit :: Maybe Int
 >              , trace :: Bool
->              , lastLoad :: [String]
+>              , lastLoad :: [FilePath]
+>              , lastWrite :: Maybe FilePath
 >              , format :: Format
 >              }
 
@@ -164,9 +166,11 @@ WAIT — all code below this line is a stinking pile of crap!
 >        status <- newIORef
 >                  $
 >                  Status{ env = M.empty
+>                        , idef = S.empty
 >                        , limit = Just 1000
 >                        , trace = True
 >                        , lastLoad = []
+>                        , lastWrite = Nothing
 >                        , format = Unicode
 >                        }
 >        let unescapable
@@ -234,16 +238,24 @@ One may feed `repl` with an initial input, and a cursor position.
 >                                  whnf (env st) expr
 >                             repl $ g ? Nothing $ Just ("",0)
 >                     Def v (Just e)
->                       -> do modStatus $ \s -> s{ env = M.insert v e $ env s }
+>                       -> do modStatus $ \s -> s{ env = M.insert v e $ env s
+>                                                , idef = S.insert v $ idef s
+>                                                }
 >                             repl Nothing
 >                     Def v Nothing
->                       -> do modStatus $ \s -> s{ env = M.delete v $ env s }
+>                       -> do modStatus $ \s -> s{ env = M.delete v $ env s
+>                                                , idef = S.delete v $ idef s
+>                                                }
 >                             repl Nothing
 >                     Clear
->                       -> do modStatus $ \s -> s{ env = M.empty }
+>                       -> do modStatus $ \s -> s{ env = M.empty
+>                                                , idef = S.empty
+>                                                }
 >                             repl Nothing
 >                     Load xs
 >                       -> cmdLoad xs
+>                     Write fp
+>                       -> cmdWrite fp
 >                     List
 >                       -> do s <- getStatus
 >                             lift . lift $ cmdList s
@@ -370,7 +382,7 @@ Try to load all files.  If at least one of them fails, do not alter
 the environment at all.  Indicating the position of error in the
 user's input line is really ugly!
 
-> cmdLoad :: [String] -> Repl ()
+> cmdLoad :: [FilePath] -> Repl ()
 > cmdLoad fs
 >   | null fs
 >       = do fs <- lastLoad <$> getStatus
@@ -380,7 +392,9 @@ user's input line is really ugly!
 >            go M.empty fs
 >   where
 >   go acc []
->     = do modStatus $ \s -> s{ env = acc }
+>     = do modStatus $ \s -> s{ env = acc
+>                             , idef = S.empty
+>                             }
 >          outputStrLn $ "Loaded total of " ++ show (M.size acc)
 >                           ++ " definitions."
 >          repl Nothing
@@ -403,6 +417,49 @@ user's input line is really ugly!
 >                            , length line
 >                              - (length . unwords . map show $ f:fs)
 >                            )
+
+> cmdWrite :: Maybe FilePath -> Repl ()
+> cmdWrite arg
+>   = case arg of
+>      Nothing -> do fp <- lastWrite <$> getStatus
+>                    write fp
+>      Just fp -> do modStatus $ \s -> s{ lastWrite = Just fp }
+>                    write $ Just fp
+>   where
+>   write Nothing
+>     = do outputStrLn $ colored "31" (showString "Missing filename.") ""
+>          repl $ Just (":w ",3)
+>   write (Just fp)
+>     = do st <- getStatus
+>          let e = env st
+>              d = idef st
+>              ds = e `M.intersection` M.fromSet undefined d
+>              num = M.size ds
+>              ls = lastLoad st
+>          outputStrLn
+>            $ "Appending " ++ show num ++ " definitions to file `"++fp++"`."
+>          lift . lift . appendFile fp
+>            .
+>            showString "\n# Appending "
+>            .
+>            shows num
+>            .
+>            showString " definitions from interactive session.\n"
+>            .
+>            ( null ls
+>              ?
+>              id
+>              $
+>              (unwordss (showString "# :l" : map shows ls) . showChar '\n')
+>            )
+>            $
+>            compose (map pp $ M.toList ds) ""
+>          repl Nothing
+>       `catch`
+>       \ioerr -> do outputStrLn $ colored "31" (shows (ioerr :: IOError)) ""
+>                    repl $ Just (":w " ++ show fp, 999)
+>   pp (v,e)
+>     = showString v . showString " = " . prettyPlain 0 e . showString ";\n"
 
 
 > cmdHelp :: [String] -> IO ()
