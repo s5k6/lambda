@@ -126,10 +126,11 @@ refactored.
 
 >     delta :: String -> [Expr] -> [Expr] -> Stack -> Steps
 >     delta "add" [Int a, Int b] es = step Delta (Int $ a + b) es
->     delta "div" [Int a, Int b] es = step Delta (Int $ a `div` b) es
+>     delta "div" [Int a, Int b] es
+>       = b==0 ? const (Failed "divide by zero") $ step Delta (Int $ div a b) es
 >     delta "eq"  [a, b] es = step Delta (Bln $ a==b) es
 >     delta "gt"  [Int a, Int b] es = step Delta (Bln $ a > b) es
->     delta "if"  [Bln b] (t:f:es) = step Delta (if b then t else f) es
+>     delta "if"  [Bln b] (t:f:es) = step Delta (b ? t $ f) es
 >     delta "lt"  [Int a, Int b] es = step Delta (Bln $ a < b) es
 >     delta "mod" [Int a, Int b] es = step Delta (Int $ a `mod` b) es
 >     delta "mul" [Int a, Int b] es = step Delta (Int $ a * b) es
