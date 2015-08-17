@@ -4,7 +4,7 @@
 > import qualified Data.Map as M
 > import qualified System.Environment as E
 > import System.Console.Haskeline
-> import Control.Monad.Reader
+> import Control.Monad.Reader hiding ( when )
 > import Parser
 > import Data
 > import Data.IORef
@@ -163,18 +163,18 @@ WAIT — all code below this line is a stinking pile of crap!
 >          . showString " — Type `:h` for help." $ ""
 >        as <- E.getArgs
 >        hist <- (++) <$> E.getEnv "HOME" <*> pure "/.lambda/history"
+>        ds <- null as ? return M.empty $ either (const M.empty) id <$> load as
 >        status <- newIORef
 >                  $
->                  Status{ env = M.empty
+>                  Status{ env = ds
 >                        , idef = S.empty
 >                        , limit = Just 1000
 >                        , trace = True
->                        , lastLoad = []
+>                        , lastLoad = as
 >                        , lastWrite = Nothing
 >                        , format = Unicode
 >                        }
->        let unescapable
->              = catchCtrlC unescapable $ null as ? repl Nothing $ cmdLoad as
+>        let unescapable = catchCtrlC unescapable $ repl Nothing
 >        runReaderT ( runInputT
 >                     defaultSettings{ historyFile = Just hist }
 >                     (withInterrupt unescapable)
@@ -190,6 +190,8 @@ WAIT — all code below this line is a stinking pile of crap!
 >            fallback
 
 
+Access to the Status.
+
 > getStatus :: Repl Status
 > getStatus = lift $ ask >>= lift . readIORef
 
@@ -202,6 +204,7 @@ WAIT — all code below this line is a stinking pile of crap!
 > modStatus f
 >   = lift $ do r <- ask
 >               lift $ modifyIORef' r f
+
 
 One may feed `repl` with an initial input, and a cursor position.
 
@@ -228,7 +231,7 @@ One may feed `repl` with an initial input, and a cursor position.
 >                       -> outputStrLn "\nbye"
 >                     Eval expr
 >                       -> do st <- getStatus
->                             g <- lift . lift
+>                             (g, mbit) <- lift . lift
 >                                  .
 >                                  report (limit st) (trace st)
 >                                  (printer $ format st)
@@ -236,9 +239,17 @@ One may feed `repl` with an initial input, and a cursor position.
 >                                  Step (Other "") expr
 >                                  $
 >                                  whnf (env st) expr
+>                             case mbit of
+>                              Just e
+>                                -> modStatus
+>                                   $ \s -> s{ env = M.insert "it" e $ env s}
+>                              _ -> outputStrLn "no it" >> return ()
 >                             repl $ g ? Nothing $ Just ("",0)
 >                     Def v (Just e)
->                       -> do modStatus $ \s -> s{ env = M.insert v e $ env s
+>                       -> do when (v=="it") . outputStrLn . ($"")
+>                               . colored "31" $ showString "WARNING: \
+>                                         \Variable `it` will be overwritten!"
+>                             modStatus $ \s -> s{ env = M.insert v e $ env s
 >                                                , idef = S.insert v $ idef s
 >                                                }
 >                             repl Nothing
@@ -305,9 +316,9 @@ One may feed `repl` with an initial input, and a cursor position.
 >             intersperse
 >             (showString " + ")
 >             [ shows n . showString t
->             | (n,t) <- [ (b,"×β")
->                        , (d,"×δ")
->                        , (l,"×lookup")
+>             | (n,t) <- [ (b,"β")
+>                        , (d,"δ")
+>                        , (l," lookup")
 >                        ]
 >             , n > 0
 >             ]
@@ -317,33 +328,33 @@ One may feed `repl` with an initial input, and a cursor position.
 >        -> Bool            -- tracing
 >        -> (Expr -> ShowS) -- printer
 >        -> Steps           -- from `whnf`
->        -> IO Bool         -- success
-> report lim tr pr = go (Stats 0 0 0 0) (Stats 0 0 0 0) Nothing
+>        -> IO (Bool, Maybe Expr) -- success
+> report lim tr pr = go (Stats 0 0 0 0) (Stats 0 0 0 0) Nothing Nothing
 >     where
->     go stats _ _ _ | maybe False (stTotal stats >=) lim
+>     go stats ostats last prev Finished
+>       = do mbPrintLast last stats ostats
+>            putStrLn $ colored "2;37" (shows stats) ""
+>            return (True, prev)
+>     go stats ostats last prev (Failed msg)
+>       = do mbPrintLast last stats ostats
+>            putStrLn $ colored "31" (showString msg) ""
+>            putStrLn $ colored "2;37" (shows stats) ""
+>            return (False, prev)
+>     go stats _ _ prev _ | maybe False (stTotal stats >=) lim
 >       = do putStrLn $ colored "31"
 >              ( showString "LIMIT EXCEEDED ("
 >              . shows stats
 >              . showString ")"
 >              ) ""
->            return False
->     go stats ostats last Finished
->       = do mbPrintLast last stats ostats
->            putStrLn $ colored "2;37" (shows stats) ""
->            return True
->     go stats ostats last (Failed msg)
->       = do mbPrintLast last stats ostats
->            putStrLn $ colored "31" (showString msg) ""
->            putStrLn $ colored "2;37" (shows stats) ""
->            return False
->     go stats ostats last (Step r e ss)
+>            return (False, prev)
+>     go stats ostats last _ (Step r e ss)
 >         | tr  -- S.member r tr
 >             = do mbPrintLast last stats ostats
 >                  putStrLn $ colored "2;36" (shows r) ""
 >                  putStrLn $ showString "   " . pr e $ ""
->                  go stats' stats' Nothing ss
+>                  go stats' stats' Nothing (Just e) ss
 >         | otherwise
->             = go stats' ostats (Just e) ss
+>             = go stats' ostats (Just e) (Just e) ss
 >       where
 >       stats'
 >         = case r of
@@ -383,40 +394,46 @@ the environment at all.  Indicating the position of error in the
 user's input line is really ugly!
 
 > cmdLoad :: [FilePath] -> Repl ()
-> cmdLoad fs
->   | null fs
->       = do fs <- lastLoad <$> getStatus
->            go M.empty fs
->   | otherwise
->       = do modStatus $ \s -> s{ lastLoad = fs }
->            go M.empty fs
+> cmdLoad args
+>   = do fs <- if null args
+>              then lastLoad <$> getStatus
+>              else (modStatus $ \s -> s{ lastLoad = args }) >> return args
+>        either
+>          (repl . Just . prompt fs)
+>          (\e -> do modStatus $ \s -> s{ env = e, idef = S.empty }
+>                    repl Nothing
+>          )
+>          =<<
+>          (lift . lift $ load fs)
 >   where
->   go acc []
->     = do modStatus $ \s -> s{ env = acc
->                             , idef = S.empty
->                             }
->          outputStrLn $ "Loaded total of " ++ show (M.size acc)
->                           ++ " definitions."
->          repl Nothing
->   go acc (f:fs)
->     = do p <- lift . lift $ parseFromFile (entirely deflist) f
+>   prompt fs n
+>     = let line = unwords $ map show fs
+>           skip = length . unwords . map show $ take n fs
+>       in (":l "++line, skip+3)
+
+> load :: [FilePath] -> IO (Either Int (M.Map String Expr))
+> load all = go 0 M.empty all
+>   where
+>   go cnt acc []
+>     = do putStrLn $ "Loaded total of " ++ show (M.size acc)
+>            ++ " definitions from "++show cnt++" files."
+>          return $ Right acc
+>   go cnt acc (f:fs)
+>     = do p <- parseFromFile (entirely deflist) f
 >          case p of
 >             Left msg
->               -> do outputStrLn $ colored "31" (shows msg) ""
->                     retry
+>               -> do putStrLn $ colored "31" (shows msg) ""
+>                     return $ Left cnt
 >             Right ds
->               -> do outputStrLn $ "Found " ++ show (M.size ds)
+>               -> do putStrLn $ "Found " ++ show (M.size ds)
 >                       ++ " definitions in `" ++ f ++ "`."
->                     go (M.union acc ds) fs
+>                     when (M.member "it" ds) . putStrLn . ($"")
+>                       . colored "31" $ showString "WARNING: Variable \
+>                                                \`it` will be overwritten!"
+>                     go (succ cnt) (M.union acc ds) fs
 >       `catch`
->       \ioerr -> do outputStrLn $ colored "31" (shows (ioerr :: IOError)) ""
->                    retry
->     where
->     retry = do line <- unwords . (":l":) . map show . lastLoad <$> getStatus
->                repl $ Just ( line
->                            , length line
->                              - (length . unwords . map show $ f:fs)
->                            )
+>       \ioerr -> do putStrLn $ colored "31" (shows (ioerr :: IOError)) ""
+>                    return $ Left cnt
 
 > cmdWrite :: Maybe FilePath -> Repl ()
 > cmdWrite arg

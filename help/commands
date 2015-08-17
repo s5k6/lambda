@@ -10,8 +10,14 @@ Basic functions
   :l <file>*
     Load the specified files.  Without arguments, reload all files.
 
+  :d
+    List all known definitions.
+
 
 Defining on the fly
+
+  The Variable `it` always containsthe last successfully calculated
+  result.
 
   :d <var> <var>* = <expression>
     Define a variable or function (one may specify arguments to the
@@ -23,7 +29,7 @@ Defining on the fly
 
   :d <var> =
     Remove definition of the given variable.
-    
+
   :d * =
     Remove definition of all variables: Clear the environment.
 
