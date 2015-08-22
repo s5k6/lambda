@@ -245,6 +245,11 @@ One may feed `repl` with an initial input, and a cursor position.
 >                                   $ \s -> s{ env = M.insert "it" e $ env s}
 >                              _ -> outputStrLn "no it" >> return ()
 >                             repl $ g ? Nothing $ Just ("",0)
+>                     Def v (Just (Var "it"))
+>                       -> do modStatus $ \s -> s{ env = M.insert v (maybe (Prim "undefined" [] 0) id . M.lookup "it" $ env s) $ env s
+>                                                , idef = S.insert v $ idef s
+>                                                }
+>                             repl Nothing
 >                     Def v (Just e)
 >                       -> do when (v=="it") . outputStrLn . ($"")
 >                               . colored "31" $ showString "WARNING: \
