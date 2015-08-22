@@ -37,7 +37,7 @@ is not expected to see this code ever again...
 >   where
 >   first es d = foldr (\e e' -> e `catchIOError` const e') d es
 >   getInfo
->     = do r <- first [ trim <$> readProcess "git" ["describe"] ""
+>     = do r <- first [ tail . trim <$> readProcess "git" ["describe"] ""
 >                       -- , rmTrailingNl <$> readProcess "svnversion" [] ""
 >                     , trim <$> readFile "REVISION"
 >                     ] $ error "Unknown revision: Not a git repo, and no \
