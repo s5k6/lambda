@@ -1,0 +1,7 @@
+Installation using a cabal sandbox
+----------------------------------
+
+    $ cabal sandbox init
+    $ cabal exec $SHELL
+    $ cabal install parsec
+    $ make
