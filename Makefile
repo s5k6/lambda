@@ -1,19 +1,20 @@
 targets = lambda
 
-.PHONY : all clean $(targets)
+.PHONY : all clean distclean $(targets)
 
 all : $(targets)
 
-lambda :
-	touch CompileTime.lhs
-	ghc --make -j$(shell nproc) -Wall -fno-warn-name-shadowing -outputdir tmp -o lambda -main-is Simple.main Simple.lhs
+.cabal-sandbox cabal.sandbox.config :
+	cabal sandbox init
+	cabal install -j parsec
+
+lambda : .cabal-sandbox cabal.sandbox.config
+	cabal exec -- ghc --make -j$(shell nproc) -Wall -fno-warn-name-shadowing -outputdir tmp -o lambda -main-is Simple.main Simple.lhs
 	strip lambda
 
-devel :
-	ghc --make -j$(shell nproc) -Wall -fno-warn-name-shadowing -outputdir tmp -o lambda -main-is Simple.main Simple.lhs
-
-devel-loop :
-	while $(MAKE) devel && ./lambda; do sleep 0.1; clear; done
-
 clean :
-	which git >/dev/null && git clean -Xd -f || rm -rf tmp $(targets)
+	rm -rf .cabal-sandbox/ cabal.sandbox.config tmp
+
+distclean : clean
+	rm -f $(targets)
+	which git >/dev/null && git clean -xnd
