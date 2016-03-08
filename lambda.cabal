@@ -21,5 +21,5 @@ executable lambda
   -- other-modules:       
   other-extensions:    TemplateHaskell
   build-depends:       base >=4.8 && <4.9, containers >=0.5 && <0.6, haskeline >=0.7 && <0.8, template-haskell >=2.10 && <2.11, process >=1.2 && <1.3, directory >=1.2 && <1.3, parsec, mtl
-  -- hs-source-dirs:      
+  hs-source-dirs:      src
   default-language:    Haskell2010
