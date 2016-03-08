@@ -4,17 +4,17 @@ targets = lambda
 
 all : $(targets)
 
-.cabal-sandbox cabal.sandbox.config :
+.cabal-sandbox/ cabal.sandbox.config : lambda.cabal
 	cabal sandbox init
-	cabal install -j parsec
+	cabal install -j --only-dependencies
 
-lambda : .cabal-sandbox cabal.sandbox.config
-	cabal exec -- ghc --make -j$(shell nproc) -Wall -fno-warn-name-shadowing -outputdir tmp -o lambda -main-is Simple.main Simple.lhs
-	strip lambda
+lambda : .cabal-sandbox/ cabal.sandbox.config
+	cabal build -j
+	strip -o lambda dist/build/lambda/lambda
 
 clean :
-	rm -rf .cabal-sandbox/ cabal.sandbox.config tmp
+	rm -rf dist/
 
 distclean : clean
-	rm -f $(targets)
+	rm -rf $(targets) .cabal-sandbox/ cabal.sandbox.config
 	which git >/dev/null && git clean -xnd
