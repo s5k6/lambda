@@ -8,7 +8,10 @@ all : $(targets)
 	cabal sandbox init
 	cabal install -j --only-dependencies
 
-lambda : .cabal-sandbox/ cabal.sandbox.config
+dist : .cabal-sandbox/ cabal.sandbox.config
+	cabal configure
+
+lambda : dist .cabal-sandbox/ cabal.sandbox.config
 	cabal build -j
 	strip -o lambda dist/build/lambda/lambda
 
