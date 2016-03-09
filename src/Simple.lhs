@@ -1,3 +1,6 @@
+synopsis: This is the main module of the simple λ-reducer.
+author: Stefan Klinger <http://stefan-klinger.de>
+
 > module Main where
 
 > import qualified Data.Set as S
@@ -8,6 +11,7 @@
 > import Parser
 > import Data
 > import Data.IORef
+> import Data.Maybe ( fromMaybe )
 > import Helper
 > import qualified CompileTime as C
 
@@ -16,7 +20,7 @@ If the fallible function `f` finds a new value, then `try f` returns
 that.  Otherwise, it returns the original.
 
 > try :: (b -> Maybe b) -> b -> b
-> try f e = maybe e id $ f e
+> try f e = fromMaybe e $ f e
 
 
 This substitution avoids the excessive introduction of new `App`
@@ -164,16 +168,14 @@ WAIT — all code below this line is a stinking pile of crap!
 >        as <- E.getArgs
 >        hist <- (++) <$> E.getEnv "HOME" <*> pure "/.lambda/history"
 >        ds <- null as ? return M.empty $ either (const M.empty) id <$> load as
->        status <- newIORef
->                  $
->                  Status{ env = ds
->                        , idef = S.empty
->                        , limit = Just 1000
->                        , trace = True
->                        , lastLoad = as
->                        , lastWrite = Nothing
->                        , format = Unicode
->                        }
+>        status <- newIORef Status{ env = ds
+>                                 , idef = S.empty
+>                                 , limit = Just 1000
+>                                 , trace = True
+>                                 , lastLoad = as
+>                                 , lastWrite = Nothing
+>                                 , format = Unicode
+>                                 }
 >        let unescapable = catchCtrlC unescapable $ repl Nothing
 >        runReaderT ( runInputT
 >                     defaultSettings{ historyFile = Just hist }
@@ -183,7 +185,7 @@ WAIT — all code below this line is a stinking pile of crap!
 > type Repl a = InputT (ReaderT (IORef Status) IO) a
 
 > catchCtrlC :: MonadException m => InputT m a -> InputT m a -> InputT m a
-> catchCtrlC fallback what = handle handler what
+> catchCtrlC fallback = handle handler
 >     where
 >     handler Interrupt
 >       = do outputStrLn $ colored "31" (showString "[Interrupted]") ""
@@ -243,10 +245,10 @@ One may feed `repl` with an initial input, and a cursor position.
 >                              Just e
 >                                -> modStatus
 >                                   $ \s -> s{ env = M.insert "it" e $ env s}
->                              _ -> outputStrLn "no it" >> return ()
+>                              _ -> void $ outputStrLn "no it"
 >                             repl $ g ? Nothing $ Just ("",0)
 >                     Def v (Just (Var "it"))
->                       -> do modStatus $ \s -> s{ env = M.insert v (maybe (Prim "undefined" [] 0) id . M.lookup "it" $ env s) $ env s
+>                       -> do modStatus $ \s -> s{ env = M.insert v (fromMaybe (Prim "undefined" [] 0) . M.lookup "it" $ env s) $ env s
 >                                                , idef = S.insert v $ idef s
 >                                                }
 >                             repl Nothing
@@ -402,7 +404,7 @@ user's input line is really ugly!
 > cmdLoad args
 >   = do fs <- if null args
 >              then lastLoad <$> getStatus
->              else (modStatus $ \s -> s{ lastLoad = args }) >> return args
+>              else modStatus (\s -> s{ lastLoad = args }) >> return args
 >        either
 >          (repl . Just . prompt fs)
 >          (\e -> do modStatus $ \s -> s{ env = e, idef = S.empty }
@@ -417,7 +419,7 @@ user's input line is really ugly!
 >       in (":l "++line, skip+3)
 
 > load :: [FilePath] -> IO (Either Int (M.Map String Expr))
-> load all = go 0 M.empty all
+> load = go 0 M.empty
 >   where
 >   go cnt acc []
 >     = do putStrLn $ "Loaded total of " ++ show (M.size acc)
@@ -495,11 +497,9 @@ user's input line is really ugly!
 >              . S.toList . S.insert "version" . S.insert "list" . S.insert "primitives"
 >              $ M.keysSet C.help
 >     help "version"
->       = do putStrLn
->              $ unlines
->              [ "Revision: " ++ C.revision
->              , "Compiled: " ++ C.date
->              ]
+>       = putStrLn $ unlines [ "Revision: " ++ C.revision
+>                            , "Compiled: " ++ C.date
+>                            ]
 >     help "primitives"
 >       = do putStrLn "Primitives with their number of arguments required \
 >                     \in WHNF:\n"

@@ -1,6 +1,6 @@
 targets = lambda
 
-.PHONY : all clean distclean $(targets)
+.PHONY : $(targets) all clean distclean lint
 
 all : $(targets)
 
@@ -21,3 +21,6 @@ clean :
 distclean : clean
 	rm -rf $(targets) .cabal-sandbox/ cabal.sandbox.config
 	which git >/dev/null && git clean -xnd
+
+lint :
+	hlint src

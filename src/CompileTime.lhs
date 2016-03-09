@@ -1,3 +1,7 @@
+synopsis: This module contains constants that shall be determined at
+    compile time, using the TemplateHaskell machanism.
+author: Stefan Klinger <http://stefan-klinger.de>
+
 > {-# LANGUAGE TemplateHaskell #-}
 
 > module CompileTime where

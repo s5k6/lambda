@@ -1,3 +1,5 @@
+synopsis: Parser for a somewhat simplified λ-calculus based language.
+author: Stefan Klinger <http://stefan-klinger.de>
 
 > module Parser
 >     ( parse, parseFromFile, entirely, deflist, expression
@@ -17,10 +19,10 @@ Combinators
 
 
 > skipManyTill :: Parser b -> Parser a -> Parser ()
-> skipManyTill q p = manyTill q (try p) >> return ()
+> skipManyTill q p = void $ manyTill q (try p)
 
 > skipTill :: Parser a -> Parser ()
-> skipTill p = skipManyTill anyChar p
+> skipTill = skipManyTill anyChar
 
 > void :: Monad m => m a -> m ()
 > void = fmap $ const ()
@@ -30,7 +32,7 @@ Spaces and comments
 
 
 > newline, space :: Parser ()
-> newline = () <$ (char '\n') <?> "newline"
+> newline = () <$ char '\n' <?> "newline"
 > space = () <$ (oneOf " \t\n" <?> "space")
 
 > commentKeyChar :: Parser Char
@@ -69,16 +71,16 @@ Der top-level Parser kümmert sich um Leerzeichen am Anfang des Input und um EOF
 >          return r
 
 > deflist :: Parser (M.Map String Expr)
-> deflist = M.fromList <$> definition `endBy` (lexeme $ char ';')
+> deflist = M.fromList <$> definition `endBy` lexeme (char ';')
 
 
-> pattern :: Parser (Bool, String)
-> pattern = (,) <$> ((char '!' >> return True) <|> return False) <*> varname
+> binder :: Parser (Bool, String)
+> binder = (,) <$> ((char '!' >> return True) <|> return False) <*> varname
 
 > definition :: Parser (String, Expr)
 > definition
 >     = do f <- varname
->          as <- many pattern
+>          as <- many binder
 >          void . lexeme $ char '='
 >          b <- expression
 >          return (f, foldr (uncurry Lam) b as)
@@ -188,7 +190,7 @@ Der top-level Parser kümmert sich um Leerzeichen am Anfang des Input und um EOF
 
 > abst :: Parser Expr
 > abst = do void . lexeme $ (char '\\' <|> char 'λ')
->           ps <- many1 pattern
+>           ps <- many1 binder
 >           void . lexeme $ string "."
 >           b <- expression
 >           return $ foldr (uncurry Lam) b ps

@@ -1,4 +1,6 @@
-> {-# LANGUAGE TemplateHaskell #-}
+synopsis: Helper functions for the CompileTime module, actually using
+    the TemplateHaskell functionality to provide compile-time data.
+author: Stefan Klinger <http://stefan-klinger.de>
 
 > module Templates where
 >

@@ -1,3 +1,5 @@
+synopsis: Data structures shared between different modules.
+author: Stefan Klinger <http://stefan-klinger.de>
 
 > module Data ( Expr(..), Command(..), Format(..), free, prettyTex, prettyUtf8, prettyPlain, primitives
 >             )
@@ -93,7 +95,7 @@ How to display λ-Expressions
 
 > class Show a => PrettyPlain a where
 >     prettyPlain :: Int -> a -> ShowS
->     prettyPlain _ e = shows e
+>     prettyPlain _ = shows
 
 > instance PrettyPlain Expr where
 >     prettyPlain _ (Var v) = showString v
@@ -131,7 +133,7 @@ How to display λ-Expressions
 
 > class Show a => PrettyUtf8 a where
 >     prettyUtf8 :: Int -> a -> ShowS
->     prettyUtf8 _ e = shows e
+>     prettyUtf8 _ = shows
 
 > instance PrettyUtf8 Expr where
 >     prettyUtf8 _ (Var v) = showString v
@@ -172,7 +174,7 @@ How to display λ-Expressions
 
 > class Show a => PrettyTex a where
 >     prettyTex :: Int -> a -> ShowS
->     prettyTex _ e = shows e
+>     prettyTex _ = shows
 
  
 > instance PrettyTex Expr where

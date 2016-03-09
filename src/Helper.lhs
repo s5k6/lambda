@@ -1,3 +1,6 @@
+synopsis: Some very generic helper functions.
+author: Stefan Klinger <http://stefan-klinger.de>
+
 > module Helper ( module Helper, module Data.List ) where
 
 > import Data.List ( intersperse, sort )
@@ -9,7 +12,7 @@
 > compose = foldr (.) id
 
 
-> colored :: String -> (ShowS) -> ShowS
+> colored :: String -> ShowS -> ShowS
 > colored c s
 >     = showString "\001\027["
 >       .
