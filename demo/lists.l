@@ -22,7 +22,7 @@ couple = pair Bonnie Clyde;
 nil c n = n;
 cons x xs c n = c x (xs c n);
 
-daltons = cons "Joe" (cons "William" (cons "Jack" (cons "Averell" nil)));
+daltons = cons Joe (cons William (cons Jack (cons Averell nil)));
 
 head xs = xs const Undef;
 last xs = xs (\h t o. t h) id Undef;
@@ -39,6 +39,7 @@ tail xs = fst (xs (\h t1. (\!t2. pair t2 (cons h t2)) (snd t1)) (pair Undef nil)
 
 
 
+
 numbers = cons 1 $ cons 2 $ cons 3 $ cons 4 $ cons 5 nil;
 
 #> Zum Rumspielen:
@@ -47,6 +48,16 @@ numbers = cons 1 $ cons 2 $ cons 3 $ cons 4 $ cons 5 nil;
     numbers add 0
 
 <#
+
+foldr f z xs = xs f z;
+
+map f xs = \c n. foldr (\x. c (f x)) n xs;
+
+
+
+shallow = foldr (\x !xs. C x xs) N;
+deep = foldr (\!x !xs. C x xs) N;
+
 
 
 
