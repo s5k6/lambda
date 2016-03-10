@@ -156,6 +156,7 @@ WAIT — all code below this line is a stinking pile of crap!
 >              , idef :: S.Set String -- mark interactively defined
 >              , limit :: Maybe Int
 >              , trace :: Bool
+>              , lastVal :: Maybe Expr
 >              , lastLoad :: [FilePath]
 >              , lastWrite :: Maybe FilePath
 >              , format :: Format
@@ -172,6 +173,7 @@ WAIT — all code below this line is a stinking pile of crap!
 >                                 , idef = S.empty
 >                                 , limit = Just 1000
 >                                 , trace = True
+>                                 , lastVal = Nothing
 >                                 , lastLoad = as
 >                                 , lastWrite = Nothing
 >                                 , format = Unicode
@@ -233,6 +235,7 @@ One may feed `repl` with an initial input, and a cursor position.
 >                       -> outputStrLn "\nbye"
 >                     Eval expr
 >                       -> do st <- getStatus
+>                             expr <- maybe expr (\m-> subst m "it" expr) . lastVal <$> return st
 >                             (g, mbit) <- lift . lift
 >                                  .
 >                                  report (limit st) (trace st)
@@ -241,25 +244,20 @@ One may feed `repl` with an initial input, and a cursor position.
 >                                  Step (Other "") expr
 >                                  $
 >                                  whnf (env st) expr
->                             case mbit of
->                              Just e
->                                -> modStatus
->                                   $ \s -> s{ env = M.insert "it" e $ env s}
->                              _ -> void $ outputStrLn "no it"
+>                             setStatus $ st{ lastVal = mbit }
 >                             repl $ g ? Nothing $ Just ("",0)
->                     Def v (Just (Var "it"))
->                       -> do modStatus $ \s -> s{ env = M.insert v (fromMaybe (Prim "undefined" [] 0) . M.lookup "it" $ env s) $ env s
->                                                , idef = S.insert v $ idef s
->                                                }
->                             repl Nothing
 >                     Def v (Just e)
->                       -> do when (v=="it") . outputStrLn . ($"")
->                               . colored "31" $ showString "WARNING: \
->                                         \Variable `it` will be overwritten!"
->                             modStatus $ \s -> s{ env = M.insert v e $ env s
->                                                , idef = S.insert v $ idef s
->                                                }
->                             repl Nothing
+>                       -> if (v=="it")
+>                          then do outputStrLn . ($"")
+>                                    . colored "31" $ showString "Magic \
+>                                         \variable `it` cannot be set!"
+>                                  repl $ Just ("",0)
+>                          else do st <- getStatus
+>                                  let e' = maybe e (\m-> subst m "it" e) (lastVal st)
+>                                  setStatus st{ env = M.insert v e' $ env st
+>                                             , idef = S.insert v $ idef st
+>                                             }
+>                                  repl Nothing
 >                     Def v Nothing
 >                       -> do modStatus $ \s -> s{ env = M.delete v $ env s
 >                                                , idef = S.delete v $ idef s
