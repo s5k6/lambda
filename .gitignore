@@ -2,3 +2,5 @@ dist/
 lambda
 .cabal-sandbox/
 cabal.sandbox.config
+log
+tmp/
