@@ -1,0 +1,35 @@
+severity: feature
+date: Fri Jun 17 10:46:43 CEST 2016
+title: α-Konversion als Schritt
+
+Steps to reproduce
+------------------
+
+λ> (\x y. f x y) y
+
+
+Observed result
+---------------
+
+   (λx y. f x y) y
+β→
+   λy0. f y y0
+1 steps: 1β
+
+
+Expected Result
+---------------
+
+   (λx y. f x y) y
+α→     # y frei in y
+   (λx y0. f x y0) y
+β→
+   λy0. f y y0
+1 steps: 1α + 1β
+
+
+Hints / ideas
+-------------
+
+
+

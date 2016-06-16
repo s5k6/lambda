@@ -1,0 +1,29 @@
+severity: feature
+date: Fri Jun 17 10:22:42 CEST 2016
+title: what to trace
+
+Steps to reproduce
+------------------
+
+λ> :set trace
+"your input" (line 1, column 11):
+unexpected end of input
+expecting letter or digit, whitespace, "all" or "none"
+
+
+Observed result
+---------------
+
+only options are "all" or "none"
+
+
+Expected Result
+---------------
+
+allow to select only β, δ, lookup, or strict reductions
+
+Hints / ideas
+-------------
+
+
+

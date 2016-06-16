@@ -1,0 +1,34 @@
+severity: feature
+date: Fri Jun 17 10:39:31 CEST 2016
+title: Generic code generating output
+
+Steps to reproduce
+------------------
+
+λ> :set format latex
+
+λ> (\x y. x) 23 45
+
+
+Observed result
+---------------
+
+   (\lambda x~y.~x)~23~45
+β→
+   (\lambda y.~23)~45
+β→
+   23
+
+
+Expected Result
+---------------
+
+make configurable how to separate steps, and what environment to use
+(calculation, math, ...)
+
+
+Hints / ideas
+-------------
+
+
+

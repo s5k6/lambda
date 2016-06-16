@@ -1,0 +1,29 @@
+severity: normal
+date: Fri Jun 17 10:26:48 CEST 2016
+title: C-c resets settings
+
+Steps to reproduce
+------------------
+
+Change somes esttings (e.g. :set limit 5)
+
+Press Ctrl-C
+
+
+Observed result
+---------------
+
+limit is reset to default
+
+
+Expected Result
+---------------
+
+should be unchanged
+
+
+Hints / ideas
+-------------
+
+
+

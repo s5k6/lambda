@@ -1,0 +1,32 @@
+date: Thu Jun 16 18:24:52 CEST 2016
+title: Newly generated variables may clash with existing ones
+severity: critical
+
+Steps to reproduce
+------------------
+
+In the interpreter, type
+
+    λ> (λy x. x y x0) x
+
+
+Observed result
+---------------
+
+       (λy x. x y x0) x
+    β→
+       λx0. x0 x x0
+
+
+Expected Result
+---------------
+
+       (λy x. x y x0) x
+    β→
+       λx1. x1 x x0
+
+
+Hints / ideas
+-------------
+
+When creating new variable names, check if bound in abstraction body.

@@ -1,0 +1,27 @@
+severity: normal
+date: Fri Jun 17 10:25:34 CEST 2016
+title: Programm terminiert wenn Datei nicht gefunden
+
+Steps to reproduce
+------------------
+
+Open file that does not exist
+
+
+Observed result
+---------------
+
+program terminates
+
+
+Expected Result
+---------------
+
+print error, continue running
+
+
+Hints / ideas
+-------------
+
+
+

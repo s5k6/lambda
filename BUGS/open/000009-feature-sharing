@@ -1,0 +1,41 @@
+severity: feature
+date: Fri Jun 17 10:41:41 CEST 2016
+title: sharing
+
+Steps to reproduce
+------------------
+
+λ> (\x. add x x) (add 2 3)
+
+
+Observed result
+---------------
+
+   (λx. add x x) (add 2 3)
+β→
+   add (add 2 3) (add 2 3)
+δ→
+   add 5 (add 2 3)
+δ→
+   add 5 5
+δ→
+   10
+
+
+Expected Result
+---------------
+
+   (λx. add x x) (add 2 3)
+β→
+   add (add 2 3) (add 2 3)
+δ→
+   add 5 5
+δ→
+   10
+
+
+Hints / ideas
+-------------
+
+
+

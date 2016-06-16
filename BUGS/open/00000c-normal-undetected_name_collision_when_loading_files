@@ -1,0 +1,42 @@
+severity: normal
+date: Fri Jun 17 10:49:33 CEST 2016
+title: undetected name collision when loading files
+
+Steps to reproduce
+------------------
+
+sk@tauhou:~$ cat >/tmp/file1.l <<.
+> x = 2;
+> .
+sk@tauhou:~$ cat >/tmp/file2.l <<.
+x = 242342;
+.
+sk@tauhou:~$ lambda
+Primitive λ-evaluator — Type `:h` for help.
+
+λ> :l /tmp/file1.l /tmp/file2.l 
+
+
+Observed result
+---------------
+
+Found 1 definitions in `/tmp/file1.l`.
+Found 1 definitions in `/tmp/file2.l`.
+Loaded total of 1 definitions from 2 files.
+
+λ> :d
+x = 2;
+Total of 1 definitions.
+
+
+Expected Result
+---------------
+
+Error: Colliding names `x` in `file1.l` and `file2.l`
+
+
+Hints / ideas
+-------------
+
+
+

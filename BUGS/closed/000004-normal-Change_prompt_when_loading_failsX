@@ -1,0 +1,27 @@
+severity: normal
+date: Fri Jun 17 10:24:24 CEST 2016
+title: Change prompt when loading fails.
+
+Steps to reproduce
+------------------
+
+load a file that does not exis / parses wrong
+
+
+Observed result
+---------------
+
+prompt stays green
+
+
+Expected Result
+---------------
+
+should turn red
+
+
+Hints / ideas
+-------------
+
+
+

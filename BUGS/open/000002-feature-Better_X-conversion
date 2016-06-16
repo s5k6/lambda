@@ -1,0 +1,33 @@
+severity: feature
+date: Fri Jun 17 10:19:23 CEST 2016
+title: Better α-conversion
+
+Steps to reproduce
+------------------
+
+λ> (λz x. (λx. x) z) x
+
+   (λz x. (λx. x) z) x
+β→
+   λx0. (λx0. x0) x
+
+
+Observed result
+---------------
+
+name `x0` reused
+
+Expected Result
+---------------
+
+λ> (λz x. (λx. x) z) x
+
+   (λz x. (λx. x) z) x
+β→
+   λx0. (λx1. x1) x
+
+Hints / ideas
+-------------
+
+
+

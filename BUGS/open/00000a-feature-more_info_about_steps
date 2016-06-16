@@ -1,0 +1,36 @@
+severity: feature
+date: Fri Jun 17 10:42:44 CEST 2016
+title: more info about steps
+
+Steps to reproduce
+------------------
+
+λ> (\!x. \f. add 4 x) (add 2 3)
+
+
+Observed result
+---------------
+
+   (λ!x f. add 4 x) (add 2 3)
+δ→
+   (λ!x f. add 4 x) 5
+β→
+   λf. add 4 5
+
+
+Expected Result
+---------------
+
+   (λ!x f. add 4 x) (add 2 3)
+δ→     # because !x is flagged as strict argument
+   (λ!x f. add 4 x) 5
+β→
+   λf. add 4 5
+# this is in WHNF
+
+
+Hints / ideas
+-------------
+
+
+
