@@ -46,7 +46,7 @@ nodes, if the subexpressions have not changed.
 refactored.
 
 > alpha :: S.Set String -> Expr -> Expr
-> alpha free = try go
+> alpha fm = try go
 >     where
 >     go (App e1 e2)
 >       = maybe
@@ -54,11 +54,11 @@ refactored.
 >         (\e1 -> Just . App e1 $ try go e2)
 >         (go e1)
 >     go (Lam s x b)
->         | S.member x free
+>         | S.member x fm
 >             = let x' = head [ z
 >                             | n <- [0::Int ..]
 >                             , let z = x++show n
->                             , not $ S.member z free
+>                             , not . S.member z $ fm `S.union` free b
 >                             ]
 >                   b' = subst (Var x') x b
 >               in Just . Lam s x' $ try go b'
