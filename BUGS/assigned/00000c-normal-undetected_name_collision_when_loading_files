@@ -1,6 +1,15 @@
 severity: normal
 date: Fri Jun 17 10:49:33 CEST 2016
 title: undetected name collision when loading files
+branch: collision
+
+Status
+------
+
+Fixed,but it would be nicer to completely rewrite the loading code:
+
+Load all files; find all collisions; print exactly where they occur.
+
 
 Steps to reproduce
 ------------------

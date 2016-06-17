@@ -235,7 +235,11 @@ One may feed `repl` with an initial input, and a cursor position.
 >                       -> outputStrLn "\nbye"
 >                     Eval expr
 >                       -> do st <- getStatus
->                             expr <- maybe expr (\m-> subst m "it" expr) . lastVal <$> return st
+>                             expr <- maybe expr (\m-> subst m "it" expr)
+>                                     .
+>                                     lastVal
+>                                     <$>
+>                                     return st
 >                             (g, mbit) <- lift . lift
 >                                  .
 >                                  report (limit st) (trace st)
@@ -253,7 +257,8 @@ One may feed `repl` with an initial input, and a cursor position.
 >                                         \variable `it` cannot be set!"
 >                                  repl $ Just ("",0)
 >                          else do st <- getStatus
->                                  let e' = maybe e (\m-> subst m "it" e) (lastVal st)
+>                                  let e' = maybe e (\m-> subst m "it" e)
+>                                                   (lastVal st)
 >                                  setStatus st{ env = M.insert v e' $ env st
 >                                             , idef = S.insert v $ idef st
 >                                             }
@@ -435,7 +440,11 @@ user's input line is really ugly!
 >                     when (M.member "it" ds) . putStrLn . ($"")
 >                       . colored "31" $ showString "WARNING: Variable \
 >                                                \`it` will be overwritten!"
->                     go (succ cnt) (M.union acc ds) fs
+>                     let repdef = M.intersection acc ds
+>                     if M.null repdef
+>                       then go (succ cnt) (M.union acc ds) fs
+>                       else do putStrLn $ colored "31" (shows $ M.keys repdef) ""
+>                               return $ Left cnt
 >       `catch`
 >       \ioerr -> do putStrLn $ colored "31" (shows (ioerr :: IOError)) ""
 >                    return $ Left cnt
