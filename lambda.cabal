@@ -9,7 +9,7 @@ license:             GPL-3
 license-file:        LICENSE
 author:              Stefan Klinger
 maintainer:          lambda@stefan-klinger.de
-copyright:           Stefan Klinger <stefan-klinger.de>
+copyright:           Stefan Klinger <http://stefan-klinger.de>
 category:            Language
 build-type:          Simple
 extra-source-files:  README
