@@ -63,16 +63,12 @@ Spaces and comments
 --------------------------------------------------------------------------------
 Der top-level Parser kümmert sich um Leerzeichen am Anfang des Input und um EOF.
 
+
 > entirely :: Parser a -> Parser a
-> entirely p
->     = do whitespace
->          r <- p
->          eof
->          return r
+> entirely = between whitespace eof
 
 > deflist :: Parser (M.Map String Expr)
 > deflist = M.fromList <$> definition `endBy` lexeme (char ';')
-
 
 > binder :: Parser (Bool, String)
 > binder = (,) <$> ((char '!' >> return True) <|> return False) <*> varname
@@ -81,7 +77,7 @@ Der top-level Parser kümmert sich um Leerzeichen am Anfang des Input und um EOF
 > definition
 >     = do f <- varname
 >          as <- many binder
->          void . lexeme $ char '='
+>          void $ lexeme $ char '='
 >          b <- expression
 >          return (f, foldr (uncurry Lam) b as)
 

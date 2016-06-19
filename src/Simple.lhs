@@ -4,7 +4,7 @@ author: Stefan Klinger <http://stefan-klinger.de>
 > module Main where
 
 > import qualified Data.Set as S
-> import qualified Data.Map as M
+> import qualified Data.Map.Strict as M
 > import qualified System.Environment as E
 > import System.Console.Haskeline
 > import Control.Monad.Reader hiding ( when )
@@ -422,32 +422,28 @@ user's input line is really ugly!
 >       in (":l "++line, skip+3)
 
 > load :: [FilePath] -> IO (Either Int (M.Map String Expr))
-> load = go 0 M.empty
+> load = go 0 M.empty M.empty
 >   where
->   go cnt acc []
->     = do putStrLn $ "Loaded total of " ++ show (M.size acc)
->            ++ " definitions from "++show cnt++" files."
->          return $ Right acc
->   go cnt acc (f:fs)
->     = do p <- parseFromFile (entirely deflist) f
->          case p of
->             Left msg
->               -> do putStrLn $ colored "31" (shows msg) ""
->                     return $ Left cnt
->             Right ds
->               -> do putStrLn $ "Found " ++ show (M.size ds)
->                       ++ " definitions in `" ++ f ++ "`."
->                     when (M.member "it" ds) . putStrLn . ($"")
->                       . colored "31" $ showString "WARNING: Variable \
->                                                \`it` will be overwritten!"
->                     let repdef = M.intersection acc ds
->                     if M.null repdef
->                       then go (succ cnt) (M.union acc ds) fs
->                       else do putStrLn $ colored "31" (shows $ M.keys repdef) ""
->                               return $ Left cnt
->       `catch`
->       \ioerr -> do putStrLn $ colored "31" (shows (ioerr :: IOError)) ""
->                    return $ Left cnt
+>     go :: Int -> M.Map String Expr -> M.Map String FilePath
+>        -> [FilePath] -> IO (Either Int (M.Map String Expr))
+>     go c acc _ []
+>       = do putStrLn $ "Using total of " ++ show (M.size acc)
+>              ++ " definitions from " ++ show c ++ " files."
+>            return $ Right acc
+>     go c acc srcs (f:fs)
+>       = do p <- parseFromFile (entirely deflist) f
+>            case p of
+>              Left msg
+>                -> do putStrLn $ colored "31" (shows msg) ""
+>                      return $ Left c
+>              Right ds
+>                -> do let rs = M.intersection acc ds
+>                      if M.null rs
+>                        then do putStrLn $ "Read " ++ show (M.size ds) ++ " definitions from \"" ++ f ++ "\"."
+>                                go (c+1) (M.union acc ds) (M.union srcs $ M.map (const f) ds) fs
+>                        else do putStrLn $ colored "31" (showString "Conflict: \"" . showString f . showString "\" redefines " . (foldr (.) id . intersperse (showString ", ") . map (\k-> showChar '`' . showString k . showString "` from \"" . maybe id showString (M.lookup k srcs) . showString "\"") $ M.keys rs)) "."
+>                                return $ Left c
+
 
 > cmdWrite :: Maybe FilePath -> Repl ()
 > cmdWrite arg
