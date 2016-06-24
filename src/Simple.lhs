@@ -443,6 +443,9 @@ user's input line is really ugly!
 >                                go (c+1) (M.union acc ds) (M.union srcs $ M.map (const f) ds) fs
 >                        else do putStrLn $ colored "31" (showString "Conflict: \"" . showString f . showString "\" redefines " . (foldr (.) id . intersperse (showString ", ") . map (\k-> showChar '`' . showString k . showString "` from \"" . maybe id showString (M.lookup k srcs) . showString "\"") $ M.keys rs)) "."
 >                                return $ Left c
+>       `catch`
+>       \ioerr -> do putStrLn $ colored "31" (shows (ioerr :: IOError)) ""
+>                    return $ Left c
 
 
 > cmdWrite :: Maybe FilePath -> Repl ()
