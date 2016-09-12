@@ -251,7 +251,7 @@ One may feed `repl` with an initial input, and a cursor position.
 >                             setStatus $ st{ lastVal = mbit }
 >                             repl $ g ? Nothing $ Just ("",0)
 >                     Def v (Just e)
->                       -> if (v=="it")
+>                       -> if v=="it"
 >                          then do outputStrLn . ($"")
 >                                    . colored "31" $ showString "Magic \
 >                                         \variable `it` cannot be set!"
