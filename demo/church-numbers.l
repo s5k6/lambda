@@ -1,6 +1,9 @@
-# Basic
+#>
+NOTE: also load `demo/lists.l`.  So the invocation should be
 
-id x = x;
+    $ ./lambda demo/lists.l demo/church-numbers.l
+
+<#
 
 
 # Conversion
@@ -24,18 +27,11 @@ times n m = λf x. m (n f) x;
 minus m n = n pred m;
 
 
-# Understand this!  See <https://en.wikipedia.org/wiki/Church_encoding>
+# Understand this!
+# See <https://en.wikipedia.org/wiki/Church_encoding>
 
-#meins> SWITCH: original meins <#
-
-<original#
-divide = (\n.((\f.(\x.x x) (\x.f (x x))) (\c.\n.\m.\f.\x.(\d.(\n.n (\x.(\a.\b.b)) (\a.\b.a)) d ((\f.\x.x) f x) (f (c d m f x))) ((\m.\n.n (\n.\f.\x.n (\g.\h.h (g f)) (\u.x) (\u.u)) m) n m))) ((\n.\f.\x. f (n f x)) n));
-#end>
-
-<meins#
-
-fix = \f. (λx. f (x x)) (λx. f (x x));
-#fix f = f $ fix f;
+#fix = \f. (λx. f (x x)) (λx. f (x x));
+fix f = f $ fix f;
 
 divide !n !m
   = ( fix
@@ -48,49 +44,24 @@ divide !n !m
     m
 ;
 
-#end> <end#
 
-#>
-:l "demo/lists.l" "demo/church-numbers.l"
-<#
 
-test x y = if (eq y $ dec $ divide (enc $ mul x y) (enc x))
-              (eq x $ dec $ divide (enc $ mul x y) (enc y))
-              False;
+# take two numbers, divide their product to the latter and check result
 
-#> small testing
+test x y = eq y $ dec $ divide (enc $ mul x y) (enc x);
 
+#> 
     :set trace none
-    :set limit 20000
-    :l
+    :set limit 1000000
+    
     test 5 7
+    test 12 5
+    
+    ands $ map (test 3) (fromTo 2 10)
 
+    (\l. ands $ map (\x. ands $ map (test x) l) l) (fromTo 2 10)
 <#
 
-primes = cons 2 $ cons 3 $ cons 5
-       $ cons 7
-#       $ cons 11
-       $ nil;
+and a b = if a b False;
+ands = foldr and True;
 
-n = enc $ primes mul 1;
-ps = λc n. foldr (λx. c (enc x)) n primes;
-
-bigtest = deep $ map (λp. dec $ divide n p) ps;
-
-#> testing
-    :set trace none
-    :set limit none
-    :l
-    bigtest
-<#
-
-
-
-#> TESTING
-
-:set trace none
-:set limit 1000000
-
-dec $ divide (enc 100) (enc 13) # 7
-
-<#

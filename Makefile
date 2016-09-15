@@ -15,8 +15,11 @@ lambda : dist .cabal-sandbox/ cabal.sandbox.config
 	cabal build -j
 	strip -o lambda dist/build/lambda/lambda
 
+README.html : README.md
+	pandoc -s -t html <$< >$@
+
 clean :
-	rm -rf dist/
+	rm -rf dist/ README.html
 
 distclean : clean
 	rm -rf $(targets) .cabal-sandbox/ cabal.sandbox.config

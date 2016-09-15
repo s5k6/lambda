@@ -4,3 +4,4 @@ lambda
 cabal.sandbox.config
 log
 tmp/
+README.html
