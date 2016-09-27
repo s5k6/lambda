@@ -9,9 +9,10 @@ author: Stefan Klinger <http://stefan-klinger.de>
 
 > import Control.Applicative
 > import Text.ParserCombinators.Parsec hiding
->     (newline, space, many, optional, (<|>))
+>     (newline, space, many, optional, (<|>), parseFromFile)
 > import Data
 > import qualified Data.Map as M
+> import Helper
  
  
 --------------------------------------------------------------------------------
@@ -58,6 +59,14 @@ Spaces and comments
 >     = do x <- p
 >          whitespace
 >          return x
+
+
+This version parses from file, but enforces UTF-8 encoding.
+
+> parseFromFile :: Parser a -> FilePath -> IO (Either ParseError a)
+> parseFromFile p fp
+>   = do input <- readFileUtf8 fp
+>        return (runParser p () fp input)
 
 
 --------------------------------------------------------------------------------

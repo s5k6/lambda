@@ -14,6 +14,7 @@ author: Stefan Klinger <http://stefan-klinger.de>
 > import Data.Maybe ( fromMaybe )
 > import Helper
 > import qualified CompileTime as C
+> import System.IO as IO
 
 
 If the fallible function `f` finds a new value, then `try f` returns
@@ -164,7 +165,10 @@ WAIT — all code below this line is a stinking pile of crap!
 
 > main :: IO ()
 > main
->   = do putStrLn $ colored "1;30" (showString "Primitive λ-evaluator")
+>   = do IO.hSetEncoding IO.stdout IO.utf8
+>        IO.hSetEncoding IO.stdin IO.utf8
+>
+>        putStrLn $ colored "1;30" (showString "Primitive λ-evaluator")
 >          . showString " — Type `:h` for help." $ ""
 >        as <- E.getArgs
 >        hist <- (++) <$> E.getEnv "HOME" <*> pure "/.lambda/history"
