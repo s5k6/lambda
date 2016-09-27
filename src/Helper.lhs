@@ -5,6 +5,19 @@ author: Stefan Klinger <http://stefan-klinger.de>
 
 > import Data.List ( intersperse, sort )
 > import Data.Char ( isSpace )
+> import System.IO
+
+
+
+Read a file, enforcing encoding to be UTF-8, instead of letting
+`readFile` figure this out.  This should avoid the dreaded `invalid
+argument (invalid character)` error.
+
+> readFileUtf8 :: FilePath -> IO String
+> readFileUtf8 fp
+>   = do h <- openFile fp ReadMode
+>        hSetEncoding h utf8
+>        hGetContents h
 
 
 

@@ -11,11 +11,10 @@ author: Stefan Klinger <http://stefan-klinger.de>
 > import Helper
 
 
-
 Provide the entire file contents as one big string.
 
 > stringOfFile :: FilePath -> Q Exp
-> stringOfFile fp = runIO (readFile fp) >>= stringE
+> stringOfFile fp = runIO (readFileUtf8 fp) >>= stringE
 
 
 
