@@ -19,15 +19,13 @@ WARNING: This is experimental, and may just break or do something wrong!
 Getting started
 ---------------
 
-    $ make
-
-This basically is a cabal frontend only.
+    $ stack build
 
 
 Then have a look at [`quickstart.l`](demo/quickstart.l) for some code
 examples.
 
-    $ ./lambda demo/quickstart.l
+    $ stack exec lambda demo/quickstart.l
     Primitive λ-evaluator — Type `:h` for help.
     …
     λ> head daltons
