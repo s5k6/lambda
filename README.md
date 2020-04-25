@@ -19,19 +19,32 @@ WARNING: This is experimental, and may just break or do something wrong!
 Getting started
 ---------------
 
-    $ stack build
+Compile:
 
+    $ cabal build
 
-Then have a look at [`quickstart.l`](demo/quickstart.l) for some code
-examples.
+Then run it, and have a look at [`quickstart.l`](demo/quickstart.l)
+for some code examples.
 
-    $ stack exec lambda demo/quickstart.l
+    $ cabal run lambda demo/quickstart.l
     Primitive λ-evaluator — Type `:h` for help.
     …
     λ> head daltons
     …
     β→
        Joe
+
+
+Install binary: FIXME: not working currently.  Why?  Due to using
+TemplateHaskell, need to sort this out...
+
+    $ cabal install
+    $ lambda
+
+Check source code:
+
+    $ cabal install hlint
+    $ hlint src/
 
 
 Enjoy!
