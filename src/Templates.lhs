@@ -57,4 +57,6 @@ at runtime.
 >   = do fs <- runIO $ filter ((/='.') . head) <$> getDirectoryContents "help"
 >        cs <- mapM (stringOfFile . ("help/"++)) fs
 >        let mfl = mkName "M.fromList"
->        return . AppE (VarE mfl) . ListE $ zipWith (\f c -> TupE [LitE (StringL f), c]) fs cs
+>        return . AppE (VarE mfl) . ListE
+>          $
+>          zipWith (\f c -> TupE [Just $ LitE (StringL f), Just c]) fs cs

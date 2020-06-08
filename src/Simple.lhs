@@ -15,6 +15,7 @@ author: Stefan Klinger <http://stefan-klinger.de>
 > import Helper
 > import qualified CompileTime as C
 > import System.IO as IO
+> import System.IO.Error
 
 
 If the fallible function `f` finds a new value, then `try f` returns
@@ -182,7 +183,7 @@ WAIT — all code below this line is a stinking pile of crap!
 >                                 , lastWrite = Nothing
 >                                 , format = Unicode
 >                                 }
->        let unescapable = catchCtrlC unescapable $ repl Nothing
+>        let unescapable = handleInterrupt unescapable $ repl Nothing
 >        runReaderT ( runInputT
 >                     defaultSettings{ historyFile = Just hist }
 >                     (withInterrupt unescapable)
@@ -190,13 +191,12 @@ WAIT — all code below this line is a stinking pile of crap!
 
 > type Repl a = InputT (ReaderT (IORef Status) IO) a
 
-> catchCtrlC :: MonadException m => InputT m a -> InputT m a -> InputT m a
-> catchCtrlC fallback = handle handler
->     where
->     handler Interrupt
->       = do outputStrLn $ colored "31" (showString "[Interrupted]") ""
->            fallback
-
+ > catchCtrlC :: MonadFail m => InputT m a -> InputT m a -> InputT m a
+ > catchCtrlC fallback = handle handler
+ >     where
+ >     handler Interrupt
+ >       = do outputStrLn $ colored "31" (showString "[Interrupted]") ""
+ >            fallback
 
 Access to the Status.
 
@@ -428,8 +428,8 @@ user's input line is really ugly!
 > load :: [FilePath] -> IO (Either Int (M.Map String Expr))
 > load = go 0 M.empty M.empty
 >   where
->     go :: Int -> M.Map String Expr -> M.Map String FilePath
->        -> [FilePath] -> IO (Either Int (M.Map String Expr))
+>     go :: Int -> M.Map String Expr -> M.Map String FilePath -> [FilePath]
+>        -> IO (Either Int (M.Map String Expr))
 >     go c acc _ []
 >       = do putStrLn $ "Using total of " ++ show (M.size acc)
 >              ++ " definitions from " ++ show c ++ " files."
@@ -447,7 +447,7 @@ user's input line is really ugly!
 >                                go (c+1) (M.union acc ds) (M.union srcs $ M.map (const f) ds) fs
 >                        else do putStrLn $ colored "31" (showString "Conflict: \"" . showString f . showString "\" redefines " . (foldr (.) id . intersperse (showString ", ") . map (\k-> showChar '`' . showString k . showString "` from \"" . maybe id showString (M.lookup k srcs) . showString "\"") $ M.keys rs)) "."
 >                                return $ Left c
->       `catch`
+>       `catchIOError`
 >       \ioerr -> do putStrLn $ colored "31" (shows (ioerr :: IOError)) ""
 >                    return $ Left c
 
@@ -460,38 +460,37 @@ user's input line is really ugly!
 >      Just fp -> do modStatus $ \s -> s{ lastWrite = Just fp }
 >                    write $ Just fp
 >   where
+>   write :: Maybe FilePath -> InputT (ReaderT (IORef Status) IO) ()
 >   write Nothing
 >     = do outputStrLn $ colored "31" (showString "Missing filename.") ""
 >          repl $ Just (":w ",3)
 >   write (Just fp)
->     = do st <- getStatus
->          let e = env st
->              d = idef st
->              ds = e `M.intersection` M.fromSet undefined d
->              num = M.size ds
->              ls = lastLoad st
->          outputStrLn
->            $ "Appending " ++ show num ++ " definitions to file `"++fp++"`."
->          lift . lift . appendFile fp
->            .
->            showString "\n# Appending "
->            .
->            shows num
->            .
->            showString " definitions from interactive session.\n"
->            .
->            ( null ls
->              ?
->              id
->              $
->              (unwordss (showString "# :l" : map shows ls) . showChar '\n')
->            )
->            $
->            compose (map pp $ M.toList ds) ""
->          repl Nothing
->       `catch`
->       \ioerr -> do outputStrLn $ colored "31" (shows (ioerr :: IOError)) ""
->                    repl $ Just (":w " ++ show fp, 999)
+>     = getStatus >>= (lift . lift . append fp) >>= repl
+>   append fp st = flip catchIOError handle $ do
+>     putStrLn $
+>       "Appending " ++ show num ++ " definitions to file `" ++ fp ++ "`."
+>     appendFile fp text
+>     return Nothing
+>     where
+>       e = env st
+>       d = idef st
+>       ds = e `M.intersection` M.fromSet (const ()) d
+>       num = M.size ds
+>       ls = lastLoad st
+>       text = compose 
+>         [ showString "\n# Appending "
+>         , shows num
+>         , showString " definitions from interactive session.\n"
+>         , null ls
+>           ? id
+>           $ unwordss (showString "# :l" : map shows ls) . showChar '\n'
+>         ]
+>         $
+>         compose (map pp $ M.toList ds)
+>         ""
+>       handle ioerr = do
+>         putStrLn $ colored "31" (shows (ioerr :: IOError)) ""
+>         return $ Just (":w " ++ show fp, 999)
 >   pp (v,e)
 >     = showString v . showString " = " . prettyPlain 0 e . showString ";\n"
 
