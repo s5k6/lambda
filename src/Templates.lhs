@@ -38,14 +38,10 @@ is not expected to see this code ever again...
 >   where
 >   first es d = foldr (\e e' -> e `catchIOError` const e') d es
 >   getInfo
->     = do r <- first [ tail . trim <$> readProcess "git" ["describe", "--dirty=+"] ""
->                       -- , rmTrailingNl <$> readProcess "svnversion" [] ""
->                     , trim <$> readFile "REVISION"
->                     ] $ error "Unknown revision: Not a git repo, and no \
->                               \`REVISION` file found."
->          p <- first [ trim <$> readProcess "git" ["diff", "--shortstat", "HEAD"] ""
->                     ] $ return ""
->          return $ length p == 0 ? r $ r++" ("++p++")"
+>     = first [ tail . trim <$> readProcess "git" ["describe", "--dirty=+"] ""
+>             , trim <$> readFile "REVISION"
+>             ] $ error "Unknown revision: Not a git repo, and no \
+>                       \`REVISION` file found."
 
 
 This generates a list of all help topics, one for each file in the
