@@ -13,25 +13,25 @@ Basic functions
   :d
     List all known definitions.
 
+  :clear
+    Clear all known definitions.
+
 
 Defining on the fly
 
   The Variable `it` always containsthe last successfully calculated
   result.
 
-  :d <var> <var>* = <expression>
+  <var> <var>* = <expression>
     Define a variable or function (one may specify arguments to the
     left of the `=`).  The following are equivalent:
 
-        :d const x y = x
-        :d const x = \y. x
-        :d const = \x y. x
+        const x y = x
+        const x = \y. x
+        const = \x y. x
 
-  :d <var> =
+  <var> =
     Remove definition of the given variable.
-
-  :d * =
-    Remove definition of all variables: Clear the environment.
 
   :w <file>?
     Write the on-the-fly definitions into <file> (or repeat last write

@@ -3,7 +3,7 @@ cabal-version: >= 1.10
 -- see http://haskell.org/cabal/users-guide/
 
 name:                lambda
-version:             0.2
+version:             0.3
 synopsis:            Primitive λ-evaluator
 description:         This is a primitive, normal order, WHNF reducer for
                      expressions of a slightly extended λ-calculus.

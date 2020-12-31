@@ -477,7 +477,7 @@ user's input line is really ugly!
 >       ds = e `M.intersection` M.fromSet (const ()) d
 >       num = M.size ds
 >       ls = lastLoad st
->       text = compose 
+>       text = compose
 >         [ showString "\n# Appending "
 >         , shows num
 >         , showString " definitions from interactive session.\n"
@@ -503,7 +503,8 @@ user's input line is really ugly!
 >     help "list"
 >       = do putStrLn "The following help topics ara available:\n"
 >            putStrLn . unlines . map ("    :h "++)
->              . S.toList . S.insert "version" . S.insert "list" . S.insert "primitives"
+>              . S.toList . S.insert "version" . S.insert "list"
+>              . S.insert "primitives"
 >              $ M.keysSet C.help
 >     help "version"
 >       = putStrLn $ unlines [ "Revision: " ++ C.revision

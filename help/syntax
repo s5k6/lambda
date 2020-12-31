@@ -3,8 +3,8 @@ Syntax overview
 
 At the interactive prompt, enter an <exp>ression.
 
-     * <exp> → <app> ( `$` <exp> )?
- 
+       <exp> → <app> ( `$` <exp> )?
+
                The `$` acts as right-associative low-priority
                application.  Like parenthesis, it is part of the
                syntax, not a builtin operator.
@@ -29,7 +29,7 @@ At the interactive prompt, enter an <exp>ression.
     <string> → A sequence of characters enclosed in `"`s.  The escape
                sequences `\\`, `\"`, `\n` and `\t` are understood.
                You cannot do anything with strings though...
-    
+
       <prim> → A primitive oprator, see the help topic on primitives for
                more: type `:h primitives`.
 
@@ -42,6 +42,6 @@ You may load predefined definitions from a file conforming to
 <deflist> with the `:l` command.  All previously known definitions are
 lost.
 
-    * <deflist> → ( <def> `;` )*
+      <deflist> → ( <def> `;` )*
 
           <def> → <var> <var>* `=` <exp>

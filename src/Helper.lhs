@@ -47,10 +47,10 @@ argument (invalid character)` error.
 > when c b = c ? b $ return ()
 
 > unliness :: [ShowS] -> ShowS
-> unliness = compose . intersperse (showChar '\n')        
+> unliness = compose . intersperse (showChar '\n')
 
 > unwordss :: [ShowS] -> ShowS
-> unwordss = compose . intersperse (showChar ' ')        
+> unwordss = compose . intersperse (showChar ' ')
 
 > trim :: String -> String
 > trim = reverse . dropWhile isSpace . reverse . dropWhile isSpace

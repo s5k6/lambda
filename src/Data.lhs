@@ -78,7 +78,7 @@ Properties
 > free (Lam _ v e) = S.delete v $ free e
 > free _ = S.empty
 
- 
+
 
 --------------------------------------------------------------------------------
 How to display λ-Expressions
@@ -176,7 +176,7 @@ How to display λ-Expressions
 >     prettyTex :: Int -> a -> ShowS
 >     prettyTex _ = shows
 
- 
+
 > instance PrettyTex Expr where
 >   prettyTex _ (Var v) = showString v
 >   prettyTex _ (Str s) = showString "\\textrm{" . shows s . showString "}"
@@ -212,6 +212,6 @@ How to display λ-Expressions
  > prettyTex p (Strict n es)
  >     = showChar '«' . shows (foldr1 (flip App) es) . showString " ?" . shows n . showChar '»'
 
- 
+
 
 ================================================================================

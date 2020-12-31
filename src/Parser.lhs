@@ -13,8 +13,8 @@ author: Stefan Klinger <http://stefan-klinger.de>
 > import Data
 > import qualified Data.Map as M
 > import Helper
- 
- 
+
+
 --------------------------------------------------------------------------------
 Combinators
 
@@ -102,7 +102,7 @@ Der top-level Parser kümmert sich um Leerzeichen am Anfang des Input und um EOF
          |  <con>           eine Variable, eine Konstante, eine Abstraktion,
          |  <abst>          oder ein Klammerausdruck, evtl mit lokalen
          |  <paren>         Definitionen.
- 
+
 > lexpr :: Parser Expr
 > lexpr = abst <|> varOrPrim <|> con <|> paren
 
@@ -138,7 +138,7 @@ Der top-level Parser kümmert sich um Leerzeichen am Anfang des Input und um EOF
  > op = Var <$> opname
 
  > opname = lexeme $ (:) <$> letter <*> many (oneOf "~!@%^&*/-+=")
- 
+
 
 <con> ::= <string> | <integer> | `__`
 
@@ -148,7 +148,7 @@ Der top-level Parser kümmert sich um Leerzeichen am Anfang des Input und um EOF
 >              , Bln <$> blnLiteral
 >              , Sym <$> symLiteral
 >              ]
- 
+
 > intLiteral :: Parser Integer
 > intLiteral
 >     = lexeme $ f . map (toInteger . subtract o . fromEnum) <$> many1 digit
@@ -189,7 +189,7 @@ Der top-level Parser kümmert sich um Leerzeichen am Anfang des Input und um EOF
 > symLiteral :: Parser String
 > symLiteral
 >     = lexeme $ (:) <$> upper <*> many (alphaNum <|> oneOf "_'")
- 
+
 
 <abst> ::= `\` (`!`? <var>)+ `.` <expression>
 
@@ -253,15 +253,15 @@ Parser für Eingaben am interaktiven Prompt
 >       , key "w" >> Write <$> optional word
 >       , key "r" >> fail "Command `:r` is deprecated, use `:l` with no arg\
 >                         \uments instead."
->       , key "c" >> fail "Command `:c` is deprecated, use `:d *=` instead."
->       , key "d" >> choice [ try $ (\(s,e) -> Def s $ Just e) <$> definition
->                           , Def <$> varname <*> pure Nothing <* key "="
->                           , key "*" >> key "=" >> return Clear
->                           , return List
->                           ]
+>       , key "clear" >> return Clear
+>       , key "d" >> return List
 >       , key "set" >> option ShowSettings setting
 >       ]
 >     )
+>     <|>
+>     (try $ (\(s,e) -> Def s $ Just e) <$> definition)
+>     <|>
+>     (try $ Def <$> varname <*> pure Nothing <* key "=")
 >     <|>
 >     Eval <$> expression
 
