@@ -14,8 +14,11 @@ maintainer:          lambda@stefan-klinger.de
 copyright:           Stefan Klinger <http://stefan-klinger.de>
 category:            Language
 build-type:          Simple
-extra-source-files: help/basic help/commands help/license help/setup help/syntax REVISION
-
+extra-source-files:  help/basic
+                     help/commands
+                     help/license
+                     help/setup
+                     help/syntax
 executable lambda
   main-is:             Simple.lhs
   ghc-options:         -Wall -fno-warn-name-shadowing
@@ -25,13 +28,13 @@ executable lambda
                      , Parser
                      , Templates
   -- other-extensions:    TemplateHaskell
-  build-depends:       base >=4.14 && <4.15
-                     , containers >=0.6 && <0.7
-                     , haskeline >=0.8 && <0.9
-                     , template-haskell >=2.16 && <2.17
-                     , process >=1.6 && <1.7
-                     , directory >=1.3 && <1.4
-                     , parsec >=3.1 && <3.2
-                     , mtl >=2.2 && <2.3
+  build-depends:       base
+                     , containers
+                     , haskeline
+                     , template-haskell
+                     , process
+                     , directory
+                     , parsec
+                     , mtl
   hs-source-dirs:      src
   default-language:    Haskell2010
